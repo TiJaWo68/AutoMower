@@ -4,7 +4,6 @@ import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
@@ -23,14 +22,13 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 public class SetupGroundPanel extends JPanel {
 
 	protected abstract class MultiLineDrawer extends DelegatedMouseAdapter {
 		protected MultiLine2D current = null;
 
+		@Override
 		public void mouseClicked(MouseEvent me) {
 			if (me.getButton() == MouseEvent.BUTTON1)
 				if (me.getClickCount() == 2 && current != null && current.getNumberOfPoints() > 2)
@@ -88,12 +86,14 @@ public class SetupGroundPanel extends JPanel {
 	protected DelegatedMouseAdapter setBorderMA = new MultiLineDrawer() {
 		MultiLine2D previousBorder = null;
 
+		@Override
 		protected void activated() {
 			previousBorder = model.getBorder();
 			current = new MultiLine2D(GroundModel.BORDER_COLOR);
 			model.setBorder(current);
 		}
 
+		@Override
 		protected void deactivated() {
 			if (current.getNumberOfPoints() == 0)
 				model.setBorder(previousBorder);
@@ -102,16 +102,19 @@ public class SetupGroundPanel extends JPanel {
 	};
 	protected DelegatedMouseAdapter addObstacleMA = new MultiLineDrawer() {
 
+		@Override
 		protected void activated() {
 			current = new MultiLine2D(GroundModel.OBSTACLE_COLOR);
 			model.addObstacle(current);
 		}
 
+		@Override
 		protected void deactivated() {
 			if (current.getNumberOfPoints() < 2)
 				model.removeObstacle(current);
 		}
 
+		@Override
 		protected void handleLMDoubleClick() {
 			current.closePath();
 			current = new MultiLine2D(GroundModel.OBSTACLE_COLOR);
@@ -120,6 +123,7 @@ public class SetupGroundPanel extends JPanel {
 
 	};
 	protected DelegatedMouseAdapter removeObstacleMA = new DelegatedMouseAdapter() {
+		@Override
 		public void mouseClicked(MouseEvent me) {
 			try {
 				Point2D tp = createAffineTransform().inverseTransform(me.getPoint(), new Point2D.Double());
@@ -130,6 +134,7 @@ public class SetupGroundPanel extends JPanel {
 		}
 	};
 	protected DelegatedMouseAdapter calibrateMA = new DelegatedMouseAdapter() {
+		@Override
 		public void mouseClicked(MouseEvent me) {
 			try {
 				Point2D tp = createAffineTransform().inverseTransform(me.getPoint(), new Point2D.Double());
@@ -138,8 +143,7 @@ public class SetupGroundPanel extends JPanel {
 					Line2D line = obstacle.getLine2D(tp);
 					if (line != null) {
 						JFormattedTextField textfield = new JFormattedTextField(new DecimalFormat("ddd"));
-						int result = JOptionPane.showConfirmDialog(SetupGroundPanel.this, textfield, "Enter length in cm for selected line",
-								JOptionPane.OK_CANCEL_OPTION);
+						int result = JOptionPane.showConfirmDialog(SetupGroundPanel.this, textfield, "Enter length in cm for selected line", JOptionPane.OK_CANCEL_OPTION);
 						if (result == JOptionPane.OK_OPTION) {
 							int length = Integer.parseInt(textfield.getText());
 							model.setCalibration(line, length);
@@ -158,29 +162,21 @@ public class SetupGroundPanel extends JPanel {
 
 	public SetupGroundPanel(GroundModel model) {
 		super(new FlowLayout(FlowLayout.RIGHT));
-		model.setChangeListener(new ChangeListener() {
-
-			public void stateChanged(ChangeEvent e) {
-				repaint();
-			}
-		});
+		model.setChangeListener(e -> repaint());
 		setOpaque(true);
 		this.model = model;
 		JButton button = new JButton(new HamburgerMenuIcon(30));
-		button.addActionListener(new ActionListener() {
-
-			public void actionPerformed(ActionEvent e) {
-				JPopupMenu menu = new JPopupMenu();
-				menu.add(new SetDelegateMouseAdapter("set border", setBorderMA));
-				menu.add(new SetDelegateMouseAdapter("new obstacle", addObstacleMA));
-				menu.add(new SetDelegateMouseAdapter("remove obstacle", removeObstacleMA));
-				menu.add(new SetDelegateMouseAdapter("calibrate", calibrateMA));
-				menu.show(button, 0, 0);
-			}
+		button.addActionListener(e -> {
+			JPopupMenu menu = new JPopupMenu();
+			menu.add(new SetDelegateMouseAdapter("set border", setBorderMA));
+			menu.add(new SetDelegateMouseAdapter("new obstacle", addObstacleMA));
+			menu.add(new SetDelegateMouseAdapter("remove obstacle", removeObstacleMA));
+			menu.add(new SetDelegateMouseAdapter("calibrate", calibrateMA));
+			menu.show(button, 0, 0);
 		});
 		add(button);
 		try {
-			image = ImageIO.read(new File("C:\\Users\\Till\\Downloads\\ground.png"));
+			image = ImageIO.read(new File("ground.png"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

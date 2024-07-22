@@ -9,6 +9,8 @@ import java.awt.EventQueue;
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
+import com.formdev.flatlaf.FlatDarculaLaf;
+
 /**
  * @author Till
  */
@@ -19,7 +21,7 @@ public class App extends JFrame {
 	 */
 	public static void main(String[] args) {
 		EventQueue.invokeLater(() -> {
-//			FlatDarculaLaf.setup();
+			FlatDarculaLaf.setup();
 			new App().setVisible(true);
 		});
 	}
