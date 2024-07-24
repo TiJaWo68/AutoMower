@@ -9,13 +9,16 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
  * @author Till
  */
-public class MultiLine2D {
+public class MultiLine2D implements Serializable {
+
+	static final long serialVersionUID = 123456789015L;
 
 	public static final int ED = 4;
 
@@ -51,9 +54,8 @@ public class MultiLine2D {
 				g.drawLine((int) (p1.getX()), (int) (p1.getY()), (int) (p2.getX()), (int) (p2.getY()));
 			p1 = p2;
 		}
-		if (closed && p1 != null) {
+		if (closed && p1 != null)
 			g.drawLine((int) (p1.getX()), (int) (p1.getY()), (int) (first.getX()), (int) (first.getY()));
-		}
 	}
 
 	public int getNumberOfPoints() {
@@ -88,11 +90,9 @@ public class MultiLine2D {
 	}
 
 	public Point2D getPoint(Point2D tp) {
-		for (Point2D p : points) {
-			if (Math.abs(p.getX() - tp.getX()) < ED && Math.abs(p.getY() - tp.getY()) < ED) {
+		for (Point2D p : points)
+			if (Math.abs(p.getX() - tp.getX()) < ED && Math.abs(p.getY() - tp.getY()) < ED)
 				return p;
-			}
-		}
 		return null;
 	}
 }

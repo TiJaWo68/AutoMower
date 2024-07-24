@@ -16,16 +16,17 @@ import com.formdev.flatlaf.FlatDarculaLaf;
  */
 public class App extends JFrame {
 
+	private static App app;
+	GroundModel ground;
+
 	/**
 	 * @param args
 	 */
-
-	GroundModel ground;
-
 	public static void main(String[] args) {
 		EventQueue.invokeLater(() -> {
 			FlatDarculaLaf.setup();
-			new App().setVisible(true);
+			app = new App();
+			app.setVisible(true);
 		});
 	}
 
@@ -38,13 +39,18 @@ public class App extends JFrame {
 		setMinimumSize(new Dimension(600, 600));
 		pack();
 
-		// A new instance of class MenuBar
-		MenuBar callMenuBar = new MenuBar("");
-
 		// Set the MenuBar
-		this.setJMenuBar(callMenuBar.menuBar());
+		this.setJMenuBar(MenuBar.create());
 
 		setLocationRelativeTo(null);
+	}
+
+	public GroundModel getGroundModel() {
+		return ground;
+	}
+
+	public static App getApp() {
+		return app;
 	}
 
 }
