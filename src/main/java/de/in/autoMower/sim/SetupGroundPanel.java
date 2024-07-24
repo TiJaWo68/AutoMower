@@ -24,6 +24,8 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 
 public class SetupGroundPanel extends JPanel {
+	
+	MethodsMenuBar insertImage;
 
 	protected abstract class MultiLineDrawer extends DelegatedMouseAdapter {
 		protected MultiLine2D current = null;
