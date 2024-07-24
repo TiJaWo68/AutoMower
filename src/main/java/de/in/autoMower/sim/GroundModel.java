@@ -6,10 +6,14 @@ import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.imageio.ImageIO;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -32,6 +36,25 @@ public class GroundModel implements Serializable {
 	List<MultiLine2D> obstacles = new LinkedList<>();
 
 	Double calibration = null;
+
+	private transient BufferedImage image;
+
+	public BufferedImage getImage() {
+		return image;
+	}
+
+	public void setImage(BufferedImage image) {
+		this.image = image;
+		listener.stateChanged(new ChangeEvent(image));
+	}
+
+	public GroundModel() {
+		try {
+			image = ImageIO.read(new File("ground.png"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public MultiLine2D getBorder() {
 		return border;
@@ -70,7 +93,8 @@ public class GroundModel implements Serializable {
 			g2d.drawLine((int) p1.getX(), (int) p1.getY(), (int) p2.getX(), (int) p2.getY());
 		} else if (highLightedPoint != null) {
 			Point2D p = transform.transform(highLightedPoint, new Point2D.Double());
-			g2d.drawOval((int) (p.getX() - MultiLine2D.ED), (int) (p.getY() - MultiLine2D.ED), 2 * MultiLine2D.ED, 2 * MultiLine2D.ED);
+			g2d.drawOval((int) (p.getX() - MultiLine2D.ED), (int) (p.getY() - MultiLine2D.ED), 2 * MultiLine2D.ED,
+					2 * MultiLine2D.ED);
 		}
 
 	}
@@ -94,7 +118,8 @@ public class GroundModel implements Serializable {
 	}
 
 	protected boolean testForHighLightedChanged(Line2D bLine, Point2D bPoint) {
-		if ((highLightedPoint != null && highLightedPoint != bPoint) || (highLightedLine != null && highLightedLine != bLine))
+		if ((highLightedPoint != null && highLightedPoint != bPoint)
+				|| (highLightedLine != null && highLightedLine != bLine))
 			listener.stateChanged(new ChangeEvent(this));
 		return highLightedLine != null || highLightedPoint != null;
 	}

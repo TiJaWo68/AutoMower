@@ -18,6 +18,7 @@ import java.text.DecimalFormat;
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -158,7 +159,7 @@ public class SetupGroundPanel extends JPanel {
 		}
 	};
 
-	BufferedImage image;
+		
 	GroundModel model;
 	DelegatedMouseAdapter delegate = null;
 
@@ -177,11 +178,7 @@ public class SetupGroundPanel extends JPanel {
 			menu.show(button, 0, 0);
 		});
 		add(button);
-		try {
-			image = ImageIO.read(new File("ground.png"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		
 		MouseAdapter mouseAdapter = new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -217,12 +214,15 @@ public class SetupGroundPanel extends JPanel {
 		addMouseMotionListener(mouseAdapter);
 	}
 
+	
+
+
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		if (image != null && g instanceof Graphics2D g2d) {
+		if (model.getImage() != null && g instanceof Graphics2D g2d) {
 			AffineTransform transform = createAffineTransform();
-			g2d.drawImage(image, transform, null);
+			g2d.drawImage(model.getImage(), transform, null);
 			model.draw(g2d, transform);
 		}
 	}
@@ -230,8 +230,8 @@ public class SetupGroundPanel extends JPanel {
 	protected AffineTransform createAffineTransform() {
 		double width = 1d * getWidth();
 		double height = 1d * getHeight();
-		double iWidth = (1d * image.getWidth());
-		double iHeight = (1d * image.getHeight());
+		double iWidth = (1d * model.getImage().getWidth());
+		double iHeight = (1d * model.getImage().getHeight());
 		double zoom = 1d / Math.max(iWidth / width, iHeight / height);
 		AffineTransform transform = AffineTransform.getScaleInstance(zoom, zoom);
 		double xoff = (width - zoom * iWidth) / 2d;
