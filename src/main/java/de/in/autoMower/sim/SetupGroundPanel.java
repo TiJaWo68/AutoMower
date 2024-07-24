@@ -10,23 +10,16 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.text.DecimalFormat;
 
-import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 
 public class SetupGroundPanel extends JPanel {
-	
-	
 
 	protected abstract class MultiLineDrawer extends DelegatedMouseAdapter {
 		protected MultiLine2D current = null;
@@ -159,15 +152,13 @@ public class SetupGroundPanel extends JPanel {
 		}
 	};
 
-		
 	GroundModel model;
 	DelegatedMouseAdapter delegate = null;
 
 	public SetupGroundPanel(GroundModel model) {
 		super(new FlowLayout(FlowLayout.RIGHT));
-		model.setChangeListener(e -> repaint());
+		setModel(model);
 		setOpaque(true);
-		this.model = model;
 		JButton button = new JButton(new HamburgerMenuIcon(30));
 		button.addActionListener(e -> {
 			JPopupMenu menu = new JPopupMenu();
@@ -178,7 +169,7 @@ public class SetupGroundPanel extends JPanel {
 			menu.show(button, 0, 0);
 		});
 		add(button);
-		
+
 		MouseAdapter mouseAdapter = new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -214,9 +205,6 @@ public class SetupGroundPanel extends JPanel {
 		addMouseMotionListener(mouseAdapter);
 	}
 
-	
-
-
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
@@ -238,6 +226,12 @@ public class SetupGroundPanel extends JPanel {
 		double yoff = (height - zoom * iHeight) / 2d;
 		transform.translate(xoff, yoff);
 		return transform;
+	}
+
+	public void setModel(GroundModel model) {
+		this.model = model;
+		model.setChangeListener(e -> repaint());
+		repaint();
 	}
 
 }

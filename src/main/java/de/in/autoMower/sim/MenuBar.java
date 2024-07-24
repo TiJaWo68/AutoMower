@@ -17,12 +17,10 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.KeyStroke;
 
-public class MenuBar  {
+public class MenuBar {
 
 	// The inner class for the actions
 	static abstract class MyAction extends AbstractAction {
-
-		
 
 		// The constructor for the inner class MyActions
 		public MyAction(String text, ImageIcon icon, String toolTip, KeyStroke shortCut, String actionText) {
@@ -37,11 +35,25 @@ public class MenuBar  {
 	static MyAction openProjectAct = new MyAction("Open Project", null, "Opens an existing project", null, "open") {
 
 		public void actionPerformed(ActionEvent e) {
-	 JFileChooser fc = new JFileChooser();
-	 if (fc.showOpenDialog(fc) == JFileChooser.APPROVE_OPTION) {
-		 
-		 
-	 }
+			JFileChooser fc = new JFileChooser();
+			if (fc.showOpenDialog(fc) == JFileChooser.APPROVE_OPTION) {
+				// Zipfile fc.getSelectedFile()
+				// oder
+				// ZipInputStream fc.getSelectedFile()
+
+				// ZipEntry zi= zipFile.getEntry("image");
+				BufferedImage image = null;
+				// BufferedImage image =ImageIO.read(zi.getInputStream());
+
+				// ZipEntry zi= zipFile.getEntry("groundModel");
+				// OjectInputStream ois=new OjectInputStream(zi.getInputStream());
+				GroundModel model = null;
+				// GroundModel model=(GroundModel) ois.readObject();
+
+				model.setImage(image);
+				App app = App.getApp();
+				app.setModel(model);
+			}
 
 		}
 
@@ -50,19 +62,19 @@ public class MenuBar  {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			 JFileChooser fc = new JFileChooser();
-			 if (fc.showOpenDialog(fc) == JFileChooser.APPROVE_OPTION) {
-					App app = App.getApp(); 
-					GroundModel groundModel = app.getGroundModel();
-					try {
-						BufferedImage image = ImageIO.read(fc.getSelectedFile());
-						
-						groundModel.setImage(image);
-					} catch (IOException ex) {
-						ex.printStackTrace();
-					}
-				 
-			 }
+			JFileChooser fc = new JFileChooser();
+			if (fc.showOpenDialog(fc) == JFileChooser.APPROVE_OPTION) {
+				App app = App.getApp();
+				GroundModel groundModel = app.getGroundModel();
+				try {
+					BufferedImage image = ImageIO.read(fc.getSelectedFile());
+
+					groundModel.setImage(image);
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				}
+
+			}
 		}
 
 	};
@@ -79,9 +91,11 @@ public class MenuBar  {
 				try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(fc.getSelectedFile()))) {
 					ZipEntry ze = new ZipEntry("groundModel");
 					zip.putNextEntry(ze);
-					try (ObjectOutputStream oos = new ObjectOutputStream(zip)) {
-						oos.writeObject(groundModel);
-					}
+					ObjectOutputStream oos = new ObjectOutputStream(zip);
+					oos.writeObject(groundModel);
+					ze = new ZipEntry("image");
+					zip.putNextEntry(ze);
+					ImageIO.write(groundModel.getImage(), "png", zip);
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
