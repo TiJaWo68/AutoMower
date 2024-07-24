@@ -45,7 +45,8 @@ public class GroundModel implements Serializable {
 
 	public void setImage(BufferedImage image) {
 		this.image = image;
-		listener.stateChanged(new ChangeEvent(image));
+		if (listener != null)
+			listener.stateChanged(new ChangeEvent(image));
 	}
 
 	public GroundModel() {

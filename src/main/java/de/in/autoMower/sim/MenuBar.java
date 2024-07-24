@@ -5,8 +5,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
@@ -37,28 +39,49 @@ public class MenuBar {
 		public void actionPerformed(ActionEvent e) {
 			JFileChooser fc = new JFileChooser();
 			if (fc.showOpenDialog(fc) == JFileChooser.APPROVE_OPTION) {
+				App app = App.getApp();
+				// GroundModel groundModel = app.getGroundModel();
 				// Zipfile fc.getSelectedFile()
 				// oder
 				// ZipInputStream fc.getSelectedFile()
+				try {
+					ZipFile zf = new ZipFile(fc.getSelectedFile());
 
-				// ZipEntry zi= zipFile.getEntry("image");
-				BufferedImage image = null;
-				// BufferedImage image =ImageIO.read(zi.getInputStream());
+					// ZipEntry zi= zipFile.getEntry("image");
+					ZipEntry ze = zf.getEntry("image");
 
-				// ZipEntry zi= zipFile.getEntry("groundModel");
-				// OjectInputStream ois=new OjectInputStream(zi.getInputStream());
-				GroundModel model = null;
-				// GroundModel model=(GroundModel) ois.readObject();
+					// ZipEntry zi= zipFile.getEntry("groundModel");
+					ze = zf.getEntry("groundModel");
 
-				model.setImage(image);
-				App app = App.getApp();
-				app.setModel(model);
+					
+
+					BufferedImage image = ImageIO.read(zf.getInputStream(ze));
+
+					// OjectInputStream ois=new OjectInputStream(zi.getInputStream());
+					ObjectInputStream ois = new ObjectInputStream(zf.getInputStream(ze));
+
+					// GroundModel model = null;
+					// GroundModel model=(GroundModel) ois.readObject();
+
+					GroundModel model = (GroundModel) ois.readObject();
+
+					model.setImage(image);
+
+					app.setModel(model);
+					zf.close();
+
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+				
+				
 			}
 
 		}
 
 	};
-	static MyAction changeImageAct = new MyAction("Change Image", null, "Change picture in the project", null, "change") {
+	static MyAction changeImageAct = new MyAction("Change Image", null, "Change picture in the project", null,
+			"change") {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
@@ -79,7 +102,8 @@ public class MenuBar {
 
 	};
 
-	static MyAction saveProjectAct = new MyAction("Save Project", null, "Saves the project in a zip file", null, "save") {
+	static MyAction saveProjectAct = new MyAction("Save Project", null, "Saves the project in a zip file", null,
+			"save") {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
