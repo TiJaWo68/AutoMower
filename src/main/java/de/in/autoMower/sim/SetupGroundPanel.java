@@ -139,7 +139,8 @@ public class SetupGroundPanel extends JPanel {
 					Line2D line = obstacle.getLine2D(tp);
 					if (line != null) {
 						JFormattedTextField textfield = new JFormattedTextField(new DecimalFormat("ddd"));
-						int result = JOptionPane.showConfirmDialog(SetupGroundPanel.this, textfield, "Enter length in cm for selected line", JOptionPane.OK_CANCEL_OPTION);
+						int result = JOptionPane.showConfirmDialog(SetupGroundPanel.this, textfield,
+								"Enter length in cm for selected line", JOptionPane.OK_CANCEL_OPTION);
 						if (result == JOptionPane.OK_OPTION) {
 							int length = Integer.parseInt(textfield.getText());
 							model.setCalibration(line, length);

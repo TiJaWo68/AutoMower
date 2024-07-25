@@ -40,41 +40,21 @@ public class MenuBar {
 			JFileChooser fc = new JFileChooser();
 			if (fc.showOpenDialog(fc) == JFileChooser.APPROVE_OPTION) {
 				App app = App.getApp();
-				// GroundModel groundModel = app.getGroundModel();
-				// Zipfile fc.getSelectedFile()
-				// oder
-				// ZipInputStream fc.getSelectedFile()
 				try {
 					ZipFile zf = new ZipFile(fc.getSelectedFile());
-
-					// ZipEntry zi= zipFile.getEntry("image");
 					ZipEntry ze = zf.getEntry("image");
-
-					// ZipEntry zi= zipFile.getEntry("groundModel");
-					ze = zf.getEntry("groundModel");
-
-					
-
 					BufferedImage image = ImageIO.read(zf.getInputStream(ze));
-
-					// OjectInputStream ois=new OjectInputStream(zi.getInputStream());
+					ze = zf.getEntry("groundModel");
 					ObjectInputStream ois = new ObjectInputStream(zf.getInputStream(ze));
-
-					// GroundModel model = null;
-					// GroundModel model=(GroundModel) ois.readObject();
-
 					GroundModel model = (GroundModel) ois.readObject();
-
 					model.setImage(image);
-
 					app.setModel(model);
 					zf.close();
 
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
-				
-				
+
 			}
 
 		}
@@ -111,6 +91,8 @@ public class MenuBar {
 			JFileChooser fc = new JFileChooser(new File("."));
 			if (fc.showSaveDialog(app) == JFileChooser.APPROVE_OPTION) {
 				GroundModel groundModel = app.getGroundModel();
+				AutoMowerModel autoMoverModel = app.getMower();
+				;
 				System.out.println("have fun " + fc.getSelectedFile().getAbsolutePath());
 				try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(fc.getSelectedFile()))) {
 					ZipEntry ze = new ZipEntry("groundModel");
@@ -120,6 +102,12 @@ public class MenuBar {
 					ze = new ZipEntry("image");
 					zip.putNextEntry(ze);
 					ImageIO.write(groundModel.getImage(), "png", zip);
+
+					ze = new ZipEntry("mowerModel");
+					zip.putNextEntry(ze);
+					oos = new ObjectOutputStream(zip);
+					oos.writeObject(autoMoverModel);
+
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
@@ -138,6 +126,16 @@ public class MenuBar {
 
 	};
 
+	static MyAction mowerDataAct = new MyAction("Data", null, "You can enter the data for the mower here", null,
+			"data") {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			new SettingsDialog();
+		}
+
+	};
+
 	// The method for the menuBar
 	public static JMenuBar create() {
 
@@ -147,6 +145,8 @@ public class MenuBar {
 		// The file menu is inserted in the menu bar
 		menu.add(createFileMenu());
 
+		// The mower menu is inserted in the menu bar
+		menu.add(createMowerMenu());
 		return menu;
 
 	} // End of method menuBar()
@@ -162,6 +162,15 @@ public class MenuBar {
 		fileMenu.addSeparator();
 		fileMenu.add(exitAct);
 		return fileMenu;
+	}
+
+	// The method for Menu Mower
+	public static JMenu createMowerMenu() {
+		JMenu mowerMenu = new JMenu();
+		mowerMenu.setText("Mower");
+
+		mowerMenu.add(mowerDataAct);
+		return mowerMenu;
 	}
 
 }

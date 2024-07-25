@@ -19,6 +19,7 @@ public class App extends JFrame {
 	private static App app;
 	GroundModel ground;
 	private SetupGroundPanel panel;
+	private AutoMowerModel mower;
 
 	/**
 	 * @param args
@@ -36,6 +37,7 @@ public class App extends JFrame {
 
 		ground = new GroundModel();
 		panel = new SetupGroundPanel(ground);
+		mower = new AutoMowerModel();
 		getContentPane().add(panel);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setMinimumSize(new Dimension(600, 600));
@@ -49,6 +51,10 @@ public class App extends JFrame {
 
 	public GroundModel getGroundModel() {
 		return ground;
+	}
+
+	public AutoMowerModel getMower() {
+		return mower;
 	}
 
 	public static App getApp() {

@@ -1,11 +1,12 @@
 package de.in.autoMower.sim;
 
 import java.awt.geom.Point2D;
+import java.io.Serializable;
 
-public class AutoMowerModel {
+public class AutoMowerModel implements Serializable{
 
-	double speedInCmPerSec = 1000 / 36d;
-	double mowingWidthInCm = 14;
+	double speedInCmPerSec;
+	double mowingWidthInCm;
 	Point2D destination = null;
 	Point2D currentPosition = null;
 
@@ -31,6 +32,24 @@ public class AutoMowerModel {
 
 	public void setCurrentPosition(Point2D currentPosition) {
 		this.currentPosition = currentPosition;
+	}
+
+	public void setSpeedInCmPerSec(double speedInCmPerSec) {
+		try {
+			speedInCmPerSec = Double.parseDouble(SettingsDialog.getjTfSpeed().getText());
+		} catch (NumberFormatException ex) {
+			System.err.println("Incorrect format in speed");
+		}
+		this.speedInCmPerSec = speedInCmPerSec;
+	}
+
+	public void setMowingWidthInCm(double mowingWidthInCm) {
+		try {
+			mowingWidthInCm = Double.parseDouble(SettingsDialog.getjTfWidth().getText());
+		} catch (NumberFormatException ex) {
+			System.err.println("Incorrect format in width");
+		}
+		this.mowingWidthInCm = mowingWidthInCm;
 	}
 
 }
