@@ -53,6 +53,10 @@ public class App extends JFrame {
 		return ground;
 	}
 
+	public void setMower(AutoMowerModel mower) {
+		this.mower = mower;
+	}
+
 	public AutoMowerModel getMower() {
 		return mower;
 	}

@@ -3,7 +3,10 @@ package de.in.autoMower.sim;
 import java.awt.geom.Point2D;
 import java.io.Serializable;
 
-public class AutoMowerModel implements Serializable{
+import javax.swing.JOptionPane;
+
+
+public class AutoMowerModel implements Serializable {
 
 	double speedInCmPerSec;
 	double mowingWidthInCm;
@@ -35,20 +38,12 @@ public class AutoMowerModel implements Serializable{
 	}
 
 	public void setSpeedInCmPerSec(double speedInCmPerSec) {
-		try {
-			speedInCmPerSec = Double.parseDouble(SettingsDialog.getjTfSpeed().getText());
-		} catch (NumberFormatException ex) {
-			System.err.println("Incorrect format in speed");
-		}
+		
 		this.speedInCmPerSec = speedInCmPerSec;
 	}
 
 	public void setMowingWidthInCm(double mowingWidthInCm) {
-		try {
-			mowingWidthInCm = Double.parseDouble(SettingsDialog.getjTfWidth().getText());
-		} catch (NumberFormatException ex) {
-			System.err.println("Incorrect format in width");
-		}
+		
 		this.mowingWidthInCm = mowingWidthInCm;
 	}
 

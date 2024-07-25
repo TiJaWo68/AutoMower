@@ -46,10 +46,16 @@ public class MenuBar {
 					ZipEntry ze = zf.getEntry("image");
 					BufferedImage image = ImageIO.read(zf.getInputStream(ze));
 					ze = zf.getEntry("groundModel");
+
 					ObjectInputStream ois = new ObjectInputStream(zf.getInputStream(ze));
 					GroundModel model = (GroundModel) ois.readObject();
+
+					ze = zf.getEntry("autoMoverModel");
+					ois = new ObjectInputStream(zf.getInputStream(ze));
+					AutoMowerModel autoMoverModel = (AutoMowerModel) ois.readObject();
 					model.setImage(image);
 					app.setModel(model);
+					app.setMower(autoMoverModel);
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
@@ -57,7 +63,8 @@ public class MenuBar {
 			}
 		}
 	};
-	static MyAction changeImageAct = new MyAction("Change Image", null, "Change picture in the project", null, "change") {
+	static MyAction changeImageAct = new MyAction("Change Image", null, "Change picture in the project", null,
+			"change") {
 
 		JFileChooser fc = new JFileChooser(new File("."));
 
@@ -79,7 +86,8 @@ public class MenuBar {
 
 	};
 
-	static MyAction saveProjectAct = new MyAction("Save Project", null, "Saves the project in a zip file", null, "save") {
+	static MyAction saveProjectAct = new MyAction("Save Project", null, "Saves the project in a zip file", null,
+			"save") {
 		JFileChooser fc = new JFileChooser(new File("."));
 
 		@Override
@@ -99,7 +107,7 @@ public class MenuBar {
 					zip.putNextEntry(ze);
 					ImageIO.write(groundModel.getImage(), "png", zip);
 
-					ze = new ZipEntry("mowerModel");
+					ze = new ZipEntry("autoMowerModel");
 					zip.putNextEntry(ze);
 					oos = new ObjectOutputStream(zip);
 					oos.writeObject(autoMoverModel);
@@ -127,7 +135,9 @@ public class MenuBar {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			new SettingsDialog();
+			App app = App.getApp();
+			AutoMowerModel autoMoverModel = app.getMower();
+			new SettingsDialog(autoMoverModel);
 		}
 
 	};
