@@ -35,6 +35,9 @@ public class GroundModel implements Serializable {
 
 	List<MultiLine2D> obstacles = new LinkedList<>();
 
+	/**
+	 * cm pro pixel
+	 */
 	Double calibration = null;
 
 	private transient BufferedImage image;
@@ -94,8 +97,7 @@ public class GroundModel implements Serializable {
 			g2d.drawLine((int) p1.getX(), (int) p1.getY(), (int) p2.getX(), (int) p2.getY());
 		} else if (highLightedPoint != null) {
 			Point2D p = transform.transform(highLightedPoint, new Point2D.Double());
-			g2d.drawOval((int) (p.getX() - MultiLine2D.ED), (int) (p.getY() - MultiLine2D.ED), 2 * MultiLine2D.ED,
-					2 * MultiLine2D.ED);
+			g2d.drawOval((int) (p.getX() - MultiLine2D.ED), (int) (p.getY() - MultiLine2D.ED), 2 * MultiLine2D.ED, 2 * MultiLine2D.ED);
 		}
 
 	}
@@ -119,8 +121,7 @@ public class GroundModel implements Serializable {
 	}
 
 	protected boolean testForHighLightedChanged(Line2D bLine, Point2D bPoint) {
-		if ((highLightedPoint != null && highLightedPoint != bPoint)
-				|| (highLightedLine != null && highLightedLine != bLine))
+		if ((highLightedPoint != null && highLightedPoint != bPoint) || (highLightedLine != null && highLightedLine != bLine))
 			listener.stateChanged(new ChangeEvent(this));
 		return highLightedLine != null || highLightedPoint != null;
 	}
@@ -132,9 +133,18 @@ public class GroundModel implements Serializable {
 		return null;
 	}
 
-	public void setCalibration(Line2D line, int length) {
+	public void setCalibration(Line2D line, int lengthInCM) {
 		double x = line.getX1() - line.getX2();
 		double y = line.getY1() - line.getY2();
-		calibration = length / Math.sqrt(x * x + y * y);
+		calibration = lengthInCM / Math.sqrt(x * x + y * y);
+	}
+
+	public Point2D getCollisionPoint(Point2D currentPosition, Point2D destination) {
+		// TODO have fun Ringo
+		return null;
+	}
+
+	public Double getCalibration() {
+		return calibration;
 	}
 }

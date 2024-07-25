@@ -1,19 +1,21 @@
 package de.in.autoMower.sim;
 
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.io.Serializable;
 
-import javax.swing.JOptionPane;
-
-
 public class AutoMowerModel implements Serializable {
 
-	double speedInCmPerSec;
-	double mowingWidthInCm;
+	double speedInCmPerSec = 1000 / 36d;
+	double mowingWidthInCm = 14;
+	// akkulaufZeit
+	// Ladezeit
 	Point2D destination = null;
 	Point2D currentPosition = null;
+	boolean stopped = true;
 
-	public double getInCmPerSec() {
+	public double getSpeedInCmPerSec() {
 		return speedInCmPerSec;
 	}
 
@@ -38,13 +40,38 @@ public class AutoMowerModel implements Serializable {
 	}
 
 	public void setSpeedInCmPerSec(double speedInCmPerSec) {
-		
+
 		this.speedInCmPerSec = speedInCmPerSec;
 	}
 
 	public void setMowingWidthInCm(double mowingWidthInCm) {
-		
+
 		this.mowingWidthInCm = mowingWidthInCm;
+	}
+
+	public void start(MultiLine2D line, GroundModel groundModel) {
+		long startTime = System.currentTimeMillis();
+		Double cmProPixel = groundModel.getCalibration();
+		Point2D cpoint = groundModel.getCollisionPoint(currentPosition, destination);
+		Point2D nextPoint = currentPosition;
+		line.addPoint(nextPoint);
+		Line2D current = new Line2D.Double(currentPosition, cpoint);
+		stopped = false;
+		while (!stopped) {
+			double diff = (System.currentTimeMillis() - startTime) / 1000d;
+			double distanceInCm = speedInCmPerSec * diff;
+			double pixelDistance = distanceInCm / cmProPixel;
+			double x = currentPosition.getX();
+			double y = currentPosition.getY();
+			Ellipse2D circle = new Ellipse2D.Double(x - pixelDistance, y - pixelDistance, pixelDistance, pixelDistance);
+
+			App.getApp().getPanel().repaint();
+		}
+	}
+
+	public void stop() {
+		// TODO Auto-generated method stub
+
 	}
 
 }

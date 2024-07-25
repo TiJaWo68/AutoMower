@@ -1,5 +1,6 @@
 package de.in.autoMower.sim;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -63,8 +64,7 @@ public class MenuBar {
 			}
 		}
 	};
-	static MyAction changeImageAct = new MyAction("Change Image", null, "Change picture in the project", null,
-			"change") {
+	static MyAction changeImageAct = new MyAction("Change Image", null, "Change picture in the project", null, "change") {
 
 		JFileChooser fc = new JFileChooser(new File("."));
 
@@ -86,8 +86,7 @@ public class MenuBar {
 
 	};
 
-	static MyAction saveProjectAct = new MyAction("Save Project", null, "Saves the project in a zip file", null,
-			"save") {
+	static MyAction saveProjectAct = new MyAction("Save Project", null, "Saves the project in a zip file", null, "save") {
 		JFileChooser fc = new JFileChooser(new File("."));
 
 		@Override
@@ -130,8 +129,7 @@ public class MenuBar {
 
 	};
 
-	static MyAction mowerDataAct = new MyAction("Data", null, "You can enter the data for the mower here", null,
-			"data") {
+	static MyAction mowerDataAct = new MyAction("Data", null, "You can enter the data for the mower here", null, "data") {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
@@ -153,6 +151,19 @@ public class MenuBar {
 
 		// The mower menu is inserted in the menu bar
 		menu.add(createMowerMenu());
+
+		menu.add(new JMenu(new AbstractAction("Start simulation") {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				App app = App.getApp();
+				MultiLine2D line = new MultiLine2D(Color.RED);
+				SimulationPanel panel = new SimulationPanel(app.getGroundModel());
+				app.setPanel(panel);
+				new Simulation(app.getGroundModel(), app.getMower(), line).start();
+			}
+		}));
+
 		return menu;
 
 	} // End of method menuBar()

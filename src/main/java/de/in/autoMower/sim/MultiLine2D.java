@@ -95,4 +95,15 @@ public class MultiLine2D implements Serializable {
 				return p;
 		return null;
 	}
+
+	public Point2D getStartPoint() {
+		if (points.size() > 0)
+			points.get(0);
+		return null;
+	}
+
+	public Point2D getCenterPoint() {
+		// TODO have fun Ringo
+		return null;
+	}
 }

@@ -1,12 +1,8 @@
 package de.in.autoMower.sim;
 
-import java.awt.FlowLayout;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
@@ -16,10 +12,9 @@ import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JFormattedTextField;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 
-public class SetupGroundPanel extends JPanel {
+public class SetupGroundPanel extends SimulationPanel {
 
 	protected abstract class MultiLineDrawer extends DelegatedMouseAdapter {
 		protected MultiLine2D current = null;
@@ -139,8 +134,7 @@ public class SetupGroundPanel extends JPanel {
 					Line2D line = obstacle.getLine2D(tp);
 					if (line != null) {
 						JFormattedTextField textfield = new JFormattedTextField(new DecimalFormat("ddd"));
-						int result = JOptionPane.showConfirmDialog(SetupGroundPanel.this, textfield,
-								"Enter length in cm for selected line", JOptionPane.OK_CANCEL_OPTION);
+						int result = JOptionPane.showConfirmDialog(SetupGroundPanel.this, textfield, "Enter length in cm for selected line", JOptionPane.OK_CANCEL_OPTION);
 						if (result == JOptionPane.OK_OPTION) {
 							int length = Integer.parseInt(textfield.getText());
 							model.setCalibration(line, length);
@@ -153,13 +147,10 @@ public class SetupGroundPanel extends JPanel {
 		}
 	};
 
-	GroundModel model;
 	DelegatedMouseAdapter delegate = null;
 
 	public SetupGroundPanel(GroundModel model) {
-		super(new FlowLayout(FlowLayout.RIGHT));
-		setModel(model);
-		setOpaque(true);
+		super(model);
 		JButton button = new JButton(new HamburgerMenuIcon(30));
 		button.addActionListener(e -> {
 			JPopupMenu menu = new JPopupMenu();
@@ -204,35 +195,6 @@ public class SetupGroundPanel extends JPanel {
 		};
 		addMouseListener(mouseAdapter);
 		addMouseMotionListener(mouseAdapter);
-	}
-
-	@Override
-	protected void paintComponent(Graphics g) {
-		super.paintComponent(g);
-		if (model.getImage() != null && g instanceof Graphics2D g2d) {
-			AffineTransform transform = createAffineTransform();
-			g2d.drawImage(model.getImage(), transform, null);
-			model.draw(g2d, transform);
-		}
-	}
-
-	protected AffineTransform createAffineTransform() {
-		double width = 1d * getWidth();
-		double height = 1d * getHeight();
-		double iWidth = (1d * model.getImage().getWidth());
-		double iHeight = (1d * model.getImage().getHeight());
-		double zoom = 1d / Math.max(iWidth / width, iHeight / height);
-		AffineTransform transform = AffineTransform.getScaleInstance(zoom, zoom);
-		double xoff = (width - zoom * iWidth) / 2d;
-		double yoff = (height - zoom * iHeight) / 2d;
-		transform.translate(xoff, yoff);
-		return transform;
-	}
-
-	public void setModel(GroundModel model) {
-		this.model = model;
-		model.setChangeListener(e -> repaint());
-		repaint();
 	}
 
 }

@@ -12,31 +12,24 @@ import javax.swing.JOptionPane;
 
 public class SettingsDialog {
 
-	static JFormattedTextField jTfSpeed, jTfWidth;
-	AutoMowerModel mowerModel = new AutoMowerModel();
-
-	public static JFormattedTextField getjTfSpeed() {
-		return jTfSpeed;
-	}
-
-	public static JFormattedTextField getjTfWidth() {
-		return jTfWidth;
-	}
+	JFormattedTextField jTfSpeed, jTfWidth;
 
 	public SettingsDialog(AutoMowerModel autoMoverModel) {
 		JDialog dialog = new JDialog();
 		dialog.setTitle("Mower Specifications");
 		dialog.setLayout(new GridLayout(0, 2, 5, 5));
 
-		NumberFormat nf = NumberFormat.getInstance(Locale.GERMANY);
+		NumberFormat nf = NumberFormat.getCurrencyInstance(Locale.GERMANY);
 
 		JLabel jLTextWidth = new JLabel();
 		jLTextWidth.setText("   Width (cm)");
 		jTfWidth = new JFormattedTextField(nf);
+		jTfWidth.setText(String.valueOf(autoMoverModel.getMowingWidthInCm()));
 
 		JLabel jLTextSpeed = new JLabel();
 		jLTextSpeed.setText("   Speed (cm/sec)");
 		jTfSpeed = new JFormattedTextField(nf);
+		jTfSpeed.setText(String.valueOf(autoMoverModel.getSpeedInCmPerSec()));
 
 		JButton jBCancel = new JButton("Cancel");
 		jBCancel.addActionListener(e -> {
@@ -47,24 +40,20 @@ public class SettingsDialog {
 		jbSave.addActionListener(e -> {
 
 			try {
-				autoMoverModel.mowingWidthInCm = Double.parseDouble(SettingsDialog.getjTfWidth().getText());
+				if (jTfWidth.getText().isEmpty())
+					JOptionPane.showMessageDialog(null, "Please insert the width of mover");
+				else
+					autoMoverModel.setMowingWidthInCm(Double.parseDouble(jTfWidth.getText()));
 
-				autoMoverModel.speedInCmPerSec = Double.parseDouble(SettingsDialog.getjTfSpeed().getText());
+				if (jTfSpeed.getText().isEmpty())
+					JOptionPane.showMessageDialog(null, "Please insert the speed of mover");
+				else
+					autoMoverModel.setSpeedInCmPerSec(Double.parseDouble(jTfSpeed.getText()));
 
 			} catch (NumberFormatException ex) {
 				System.err.println("Incorrect format in width");
 				JOptionPane.showMessageDialog(null, "Incorrect format");
 			}
-
-			if (SettingsDialog.getjTfWidth().getText().isEmpty()) {
-				JOptionPane.showMessageDialog(null, "Please insert the width of mover");
-			}
-
-			if (SettingsDialog.getjTfSpeed().getText().isEmpty()) {
-				JOptionPane.showMessageDialog(null, "Please insert the speed of mover");
-			}
-			jTfWidth.setText("");
-			jTfSpeed.setText("");
 		});
 
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);

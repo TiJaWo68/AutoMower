@@ -18,7 +18,7 @@ public class App extends JFrame {
 
 	private static App app;
 	GroundModel ground;
-	private SetupGroundPanel panel;
+	private SimulationPanel panel;
 	private AutoMowerModel mower;
 
 	/**
@@ -68,6 +68,19 @@ public class App extends JFrame {
 	public void setModel(GroundModel model) {
 		this.ground = model;
 		panel.setModel(model);
+	}
+
+	public SimulationPanel getPanel() {
+		return panel;
+	}
+
+	public void setPanel(SimulationPanel panel) {
+		if (this.panel != null)
+			getContentPane().remove(this.panel);
+		this.panel = panel;
+		getContentPane().add(panel);
+		revalidate();
+		repaint();
 	}
 
 }
