@@ -35,13 +35,14 @@ public class MenuBar {
 	} // End of the inner class MyActions
 
 	static MyAction openProjectAct = new MyAction("Open Project", null, "Opens an existing project", null, "open") {
+		JFileChooser fc = new JFileChooser(new File("."));
 
 		public void actionPerformed(ActionEvent e) {
-			JFileChooser fc = new JFileChooser();
 			if (fc.showOpenDialog(fc) == JFileChooser.APPROVE_OPTION) {
 				App app = App.getApp();
-				try {
-					ZipFile zf = new ZipFile(fc.getSelectedFile());
+
+				try (ZipFile zf = new ZipFile(fc.getSelectedFile())) {
+
 					ZipEntry ze = zf.getEntry("image");
 					BufferedImage image = ImageIO.read(zf.getInputStream(ze));
 					ze = zf.getEntry("groundModel");
@@ -49,23 +50,19 @@ public class MenuBar {
 					GroundModel model = (GroundModel) ois.readObject();
 					model.setImage(image);
 					app.setModel(model);
-					zf.close();
-
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
 
 			}
-
 		}
-
 	};
-	static MyAction changeImageAct = new MyAction("Change Image", null, "Change picture in the project", null,
-			"change") {
+	static MyAction changeImageAct = new MyAction("Change Image", null, "Change picture in the project", null, "change") {
+
+		JFileChooser fc = new JFileChooser(new File("."));
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			JFileChooser fc = new JFileChooser();
 			if (fc.showOpenDialog(fc) == JFileChooser.APPROVE_OPTION) {
 				App app = App.getApp();
 				GroundModel groundModel = app.getGroundModel();
@@ -82,13 +79,12 @@ public class MenuBar {
 
 	};
 
-	static MyAction saveProjectAct = new MyAction("Save Project", null, "Saves the project in a zip file", null,
-			"save") {
+	static MyAction saveProjectAct = new MyAction("Save Project", null, "Saves the project in a zip file", null, "save") {
+		JFileChooser fc = new JFileChooser(new File("."));
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			App app = App.getApp();
-			JFileChooser fc = new JFileChooser(new File("."));
 			if (fc.showSaveDialog(app) == JFileChooser.APPROVE_OPTION) {
 				GroundModel groundModel = app.getGroundModel();
 				AutoMowerModel autoMoverModel = app.getMower();
