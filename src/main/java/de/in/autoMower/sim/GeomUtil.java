@@ -19,11 +19,34 @@ import java.util.List;
 
 public final class GeomUtil {
 
-	private GeomUtil() {
-	}
-
 	public static boolean isLineValid(Point2D ptA, Point2D ptB) {
 		return ptA != null && ptB != null && !ptA.equals(ptB);
+	}
+
+	/**
+	 * Calculate angle between two lines
+	 *
+	 * @param l1 the first line
+	 * @param l2 the second line
+	 * @return Angle between two lines in degrees -360° < angle < 360°
+	 */
+	public static float angleBetween2Lines(Line2D l1, Line2D l2) {
+		return angleBetween2Lines(l1.getP1(), l1.getP2(), l2.getP1(), l2.getP2());
+	}
+
+	/**
+	 * Calculate angle between two lines
+	 *
+	 * @param ptA First point first line
+	 * @param ptB Second point first line
+	 * @param ptC First point second line
+	 * @param ptD Second point second line
+	 * @return Angle between two lines in degrees -360° < angle < 360°
+	 */
+	public static float angleBetween2Lines(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
+		float angle1 = (float) Math.atan2(ptB.getY() - ptA.getY(), ptA.getX() - ptB.getX());
+		float angle2 = (float) Math.atan2(ptD.getY() - ptC.getY(), ptC.getX() - ptD.getX());
+		return (float) Math.toDegrees(angle1 - angle2);
 	}
 
 	/**
