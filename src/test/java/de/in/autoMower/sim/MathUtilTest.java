@@ -11,46 +11,43 @@
 */
 package de.in.autoMower.sim;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.Test;
 
 /**
  * @author Christopher Schmidt <christopher.schmidt@dedalus.com>
  */
-class MathUtilTest
-{
-    
-    @Test
-    void isEqualTrueTest() {
-        
-        float a = 4f;
-        float b = 4f;
-        
-        boolean result = MathUtil.isEqual( a, b );
-        
-        assertEquals(true, result);
-                
-    }
-    
-    @Test
-    void isEqualFalseTest() {
-        
-        float a = 4f;
-        float b = 5f;
-        
-        boolean result = MathUtil.isEqual( a, b );
-        
-        assertEquals(true, result);
-                
-    }
-    
-    
-    @Test
-    void test()
-    {
-        fail( "Not yet implemented" );
-    }
-    
+class MathUtilTest {
+
+	@Test
+	void isEqualTrueTest() {
+
+		float a = 4f;
+		float b = 4f;
+
+		boolean result = MathUtil.isEqual(a, b);
+
+		assertEquals(true, result);
+
+	}
+
+	@Test
+	void isEqualFalseTest() {
+
+		float a = 4f;
+		float b = 5f;
+
+		boolean result = MathUtil.isEqual(a, b);
+
+		assertEquals(true, result);
+
+	}
+
+	@Test
+	void test() {
+		fail("Not yet implemented");
+	}
+
 }
