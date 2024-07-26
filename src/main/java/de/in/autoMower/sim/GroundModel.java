@@ -38,7 +38,7 @@ public class GroundModel implements Serializable {
 	/**
 	 * cm pro pixel
 	 */
-	Double calibration = null;
+	Double calibration = 10d;
 
 	private transient BufferedImage image;
 
@@ -139,9 +139,49 @@ public class GroundModel implements Serializable {
 		calibration = lengthInCM / Math.sqrt(x * x + y * y);
 	}
 
-	public Point2D getCollisionPoint(Point2D currentPosition, Point2D destination) {
-		// TODO have fun Ringo
-		return null;
+	public List<Line2D> getCollisionLines(Point2D p1, Point2D p2) {
+		Line2D given = new Line2D.Double(p1, p2);
+		List<Line2D> result = new LinkedList<>();
+		double distanceToP1 = Double.MAX_VALUE;
+		List<MultiLine2D> lines = new LinkedList<>(obstacles);
+		lines.add(border);
+		for (MultiLine2D line : lines)
+			for (int i = 0; i < line.getNumberOfPoints(); i++) {
+				Line2D l = line.getLine(i);
+				Point2D intersectPoint = GeomUtil.getIntersectPoint(l, given);
+				if (intersectPoint != null) {
+					double distance = p1.distance(intersectPoint);
+					if (distance < distanceToP1) {
+						distanceToP1 = distance;
+						result = List.of(l);
+					} else if (distance == distanceToP1) {
+						result = new LinkedList<>(result);
+						result.add(l);
+					}
+				}
+			}
+		return result;
+	}
+
+	public Point2D getCollisionPoint(Point2D p1, Point2D p2) {
+		Line2D given = new Line2D.Double(p1, p2);
+		Point2D found = null;
+		double distanceToP1 = Double.MAX_VALUE;
+		List<MultiLine2D> lines = new LinkedList<>(obstacles);
+		lines.add(border);
+		for (MultiLine2D line : lines)
+			for (int i = 0; i < line.getNumberOfPoints(); i++) {
+				Line2D l = line.getLine(i);
+				Point2D intersectPoint = GeomUtil.getIntersectPoint(l, given);
+				if (intersectPoint != null) {
+					double distance = p1.distance(intersectPoint);
+					if (distance < distanceToP1) {
+						distanceToP1 = distance;
+						found = intersectPoint;
+					}
+				}
+			}
+		return found;
 	}
 
 	public Double getCalibration() {

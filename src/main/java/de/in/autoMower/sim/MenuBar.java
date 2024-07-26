@@ -152,17 +152,22 @@ public class MenuBar {
 		// The mower menu is inserted in the menu bar
 		menu.add(createMowerMenu());
 
-		menu.add(new JMenu(new AbstractAction("Start simulation") {
+		AbstractAction startAction = new AbstractAction("Start ") {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				App app = App.getApp();
 				MultiLine2D line = new MultiLine2D(Color.RED);
 				SimulationPanel panel = new SimulationPanel(app.getGroundModel());
+				panel.setLine(line);
 				app.setPanel(panel);
-				new Simulation(app.getGroundModel(), app.getMower(), line).start();
+				new Thread(() -> new Simulation(app.getGroundModel(), app.getMower(), line).start()).start();
 			}
-		}));
+		};
+
+		JMenu simulationMenu = new JMenu("Simulation");
+		simulationMenu.add(startAction);
+		menu.add(simulationMenu);
 
 		return menu;
 
