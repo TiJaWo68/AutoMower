@@ -96,14 +96,15 @@ public class MultiLine2D implements Serializable {
 		return null;
 	}
 
-	public Point2D getStartPoint() {
-		if (points.size() > 0)
-			points.get(0);
+	public Line2D getLine(int number) {
+		if (points.size() < number * 2 + 1)
+			return new Line2D.Double(points.get(number * 2), points.get(number * 2 + 1));
 		return null;
 	}
 
-	public Point2D getCenterPoint() {
-		// TODO have fun Ringo
+	public Point2D getPoint(int number) {
+		if (points.size() < number)
+			return points.get(number);
 		return null;
 	}
 }

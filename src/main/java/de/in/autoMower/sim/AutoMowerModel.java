@@ -1,6 +1,5 @@
 package de.in.autoMower.sim;
 
-import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.io.Serializable;
@@ -52,19 +51,26 @@ public class AutoMowerModel implements Serializable {
 	public void start(MultiLine2D line, GroundModel groundModel) {
 		long startTime = System.currentTimeMillis();
 		Double cmProPixel = groundModel.getCalibration();
-		Point2D cpoint = groundModel.getCollisionPoint(currentPosition, destination);
-		Point2D nextPoint = currentPosition;
-		line.addPoint(nextPoint);
-		Line2D current = new Line2D.Double(currentPosition, cpoint);
+		MultiLine2D border = groundModel.getBorder();
+		Line2D currentLine = new Line2D.Double(border.getPoint(0), border.getPoint(1));
+		currentPosition = new Point2D.Double(border.getPoint(0).getX(), border.getPoint(0).getY());
+		line.addPoint(border.getPoint(0));
+		line.addPoint(currentPosition);
 		stopped = false;
 		while (!stopped) {
+
+			if (currentPosition.equals(currentLine.getP2())) {
+//				GeomUtil.geta
+			}
+
 			double diff = (System.currentTimeMillis() - startTime) / 1000d;
 			double distanceInCm = speedInCmPerSec * diff;
 			double pixelDistance = distanceInCm / cmProPixel;
-			double x = currentPosition.getX();
-			double y = currentPosition.getY();
-			Ellipse2D circle = new Ellipse2D.Double(x - pixelDistance, y - pixelDistance, pixelDistance, pixelDistance);
-
+			Point2D cop = GeomUtil.getColinearPointWithLength(currentLine.getP1(), currentLine.getP2(), pixelDistance);
+			if (currentLine.getP1().distance(cop) > currentLine.getP1().distance(currentLine.getP2()))
+				currentPosition.setLocation(currentLine.getP2());
+			else
+				currentPosition.setLocation(cop);
 			App.getApp().getPanel().repaint();
 		}
 	}
