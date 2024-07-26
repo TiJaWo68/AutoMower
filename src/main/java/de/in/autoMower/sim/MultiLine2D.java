@@ -10,6 +10,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class MultiLine2D implements Serializable {
 
 	public static final int ED = 4;
 
-	protected List<Point2D> points = new LinkedList<>();
+	protected List<Point2D> points = Collections.synchronizedList(new LinkedList<>());
 	protected Color color;
 	protected boolean closed = false;
 	protected Point2D highLightedPoint = null;
@@ -45,14 +46,16 @@ public class MultiLine2D implements Serializable {
 		g.setColor(color);
 		Point2D p1 = null;
 		Point2D first = null;
-		for (Point2D p : points) {
-			Point2D p2 = at.transform(p, new Point2D.Double());
-			if (first == null)
-				first = p2;
-			g.drawOval((int) (p2.getX() - MultiLine2D.ED / 2), (int) (p2.getY() - MultiLine2D.ED / 2), ED, ED);
-			if (p1 != null)
-				g.drawLine((int) (p1.getX()), (int) (p1.getY()), (int) (p2.getX()), (int) (p2.getY()));
-			p1 = p2;
+		synchronized (points) {
+			for (Point2D p : points) {
+				Point2D p2 = at.transform(p, new Point2D.Double());
+				if (first == null)
+					first = p2;
+				g.drawOval((int) (p2.getX() - MultiLine2D.ED / 2), (int) (p2.getY() - MultiLine2D.ED / 2), ED, ED);
+				if (p1 != null)
+					g.drawLine((int) (p1.getX()), (int) (p1.getY()), (int) (p2.getX()), (int) (p2.getY()));
+				p1 = p2;
+			}
 		}
 		if (closed && p1 != null)
 			g.drawLine((int) (p1.getX()), (int) (p1.getY()), (int) (first.getX()), (int) (first.getY()));
@@ -69,17 +72,19 @@ public class MultiLine2D implements Serializable {
 	public Line2D getLine2D(Point2D tp) {
 		Point2D p1 = null;
 		Point2D first = null;
-		for (Point2D p2 : points) {
-			if (first == null)
-				first = p2;
-			if (Math.abs(p2.getX() - tp.getX()) < ED && Math.abs(p2.getY() - tp.getY()) < ED)
-				return null;
-			if (p1 != null) {
-				Line2D.Double line = new Line2D.Double(p1, p2);
-				if (line.ptSegDist(tp) < ED)
-					return line;
+		synchronized (points) {
+			for (Point2D p2 : points) {
+				if (first == null)
+					first = p2;
+				if (Math.abs(p2.getX() - tp.getX()) < ED && Math.abs(p2.getY() - tp.getY()) < ED)
+					return null;
+				if (p1 != null) {
+					Line2D.Double line = new Line2D.Double(p1, p2);
+					if (line.ptSegDist(tp) < ED)
+						return line;
+				}
+				p1 = p2;
 			}
-			p1 = p2;
 		}
 		if (closed && p1 != null) {
 			Line2D.Double line = new Line2D.Double(p1, first);
@@ -97,8 +102,10 @@ public class MultiLine2D implements Serializable {
 	}
 
 	public Line2D getLine(int number) {
-		if (points.size() > number * 2 + 1)
-			return new Line2D.Double(points.get(number * 2), points.get(number * 2 + 1));
+		if (points.size() > number + 1)
+			return new Line2D.Double(points.get(number), points.get(number + 1));
+		if (points.size() == number + 1)
+			return new Line2D.Double(points.get(number), points.get(0));
 		return null;
 	}
 

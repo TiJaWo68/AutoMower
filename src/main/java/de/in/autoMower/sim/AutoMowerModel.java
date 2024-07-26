@@ -55,7 +55,7 @@ public class AutoMowerModel implements Serializable {
 		long startTime = System.currentTimeMillis();
 		Double cmProPixel = groundModel.getCalibration();
 		MultiLine2D border = groundModel.getBorder();
-		List<Line2D> collisionLines = List.of(border.getLine(0), border.getLine(1));
+		List<Line2D> collisionLines = List.of(border.getLine(1));
 		Line2D currentLine = new Line2D.Double(border.getPoint(0), border.getPoint(1));
 		currentPosition = new Point2D.Double(border.getPoint(0).getX(), border.getPoint(0).getY());
 		line.addPoint(border.getPoint(0));
@@ -78,8 +78,10 @@ public class AutoMowerModel implements Serializable {
 				collisionLines = groundModel.getCollisionLines(currentPosition, p2);
 				Point2D cop = GeomUtil.getIntersectPoint(collisionLines.get(0), currentLine);
 
+				currentPosition = new Point2D.Double(currentPosition.getX(), currentPosition.getY());
+				line.addPoint(currentPosition);
 				currentLine = new Line2D.Double(currentPosition, cop);
-				System.out.println(currentLine);
+				System.out.println(currentLine.getP2());
 			}
 
 			double diff = (System.currentTimeMillis() - startTime) / 1000d;
@@ -90,7 +92,6 @@ public class AutoMowerModel implements Serializable {
 				currentPosition.setLocation(currentLine.getP2());
 			else
 				currentPosition.setLocation(cop);
-			System.out.println(currentPosition);
 			App.getApp().getPanel().repaint();
 		}
 	}

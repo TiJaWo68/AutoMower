@@ -151,13 +151,14 @@ public class GroundModel implements Serializable {
 				Point2D intersectPoint = GeomUtil.getIntersectPoint(l, given);
 				if (intersectPoint != null) {
 					double distance = p1.distance(intersectPoint);
-					if (distance < distanceToP1) {
-						distanceToP1 = distance;
-						result = List.of(l);
-					} else if (distance == distanceToP1) {
-						result = new LinkedList<>(result);
-						result.add(l);
-					}
+					if (distance > 0)
+						if (distance < distanceToP1) {
+							distanceToP1 = distance;
+							result = List.of(l);
+						} else if (distance == distanceToP1) {
+							result = new LinkedList<>(result);
+							result.add(l);
+						}
 				}
 			}
 		return result;
