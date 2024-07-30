@@ -3,6 +3,7 @@ package de.in.autoMower.sim;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.Line2D;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
@@ -16,7 +17,7 @@ import javax.swing.JPopupMenu;
 
 public class SetupGroundPanel extends SimulationPanel {
 
-	protected abstract class MultiLineDrawer extends DelegatedMouseAdapter {
+	protected abstract class MultiLineDrawer extends DelegatedMouseAdapter implements MouseWheelListener {
 		protected MultiLine2D current = null;
 
 		@Override

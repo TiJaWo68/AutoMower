@@ -18,8 +18,12 @@ public class Simulation {
 
 	}
 
-	public void setCanceled(boolean canceled) {
+	public void setStop(boolean canceled) {
 		mower.stop();
+	}
+	
+	public void setResume(boolean forward) {
+		mower.resume();
 	}
 
 }

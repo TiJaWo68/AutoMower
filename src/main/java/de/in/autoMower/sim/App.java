@@ -20,6 +20,9 @@ public class App extends JFrame {
 	GroundModel ground;
 	private SimulationPanel panel;
 	private AutoMowerModel mower;
+	private Simulation simulation;
+
+
 
 	/**
 	 * @param args
@@ -38,6 +41,7 @@ public class App extends JFrame {
 		ground = new GroundModel();
 		panel = new SetupGroundPanel(ground);
 		mower = new AutoMowerModel();
+		simulation = new Simulation(ground, mower, null);
 		getContentPane().add(panel);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setMinimumSize(new Dimension(600, 600));
@@ -72,6 +76,10 @@ public class App extends JFrame {
 
 	public SimulationPanel getPanel() {
 		return panel;
+	}
+	
+	public Simulation getSimulation() {
+		return simulation;
 	}
 
 	public void setPanel(SimulationPanel panel) {

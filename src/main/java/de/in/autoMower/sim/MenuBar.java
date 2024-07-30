@@ -20,7 +20,11 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.KeyStroke;
 
+import org.w3c.dom.DOMImplementationSource;
+
 public class MenuBar {
+	
+	
 
 	// The inner class for the actions
 	static abstract class MyAction extends AbstractAction {
@@ -64,7 +68,8 @@ public class MenuBar {
 			}
 		}
 	};
-	static MyAction changeImageAct = new MyAction("Change Image", null, "Change picture in the project", null, "change") {
+	static MyAction changeImageAct = new MyAction("Change Image", null, "Change picture in the project", null,
+			"change") {
 
 		JFileChooser fc = new JFileChooser(new File("."));
 
@@ -86,7 +91,8 @@ public class MenuBar {
 
 	};
 
-	static MyAction saveProjectAct = new MyAction("Save Project", null, "Saves the project in a zip file", null, "save") {
+	static MyAction saveProjectAct = new MyAction("Save Project", null, "Saves the project in a zip file", null,
+			"save") {
 		JFileChooser fc = new JFileChooser(new File("."));
 
 		@Override
@@ -129,7 +135,8 @@ public class MenuBar {
 
 	};
 
-	static MyAction mowerDataAct = new MyAction("Data", null, "You can enter the data for the mower here", null, "data") {
+	static MyAction mowerDataAct = new MyAction("Data", null, "You can enter the data for the mower here", null,
+			"data") {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
@@ -152,7 +159,7 @@ public class MenuBar {
 		// The mower menu is inserted in the menu bar
 		menu.add(createMowerMenu());
 
-		AbstractAction startAction = new AbstractAction("Start ") {
+		AbstractAction startAction = new AbstractAction("Start ")  {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -161,12 +168,46 @@ public class MenuBar {
 				SimulationPanel panel = new SimulationPanel(app.getGroundModel());
 				panel.setLine(line);
 				app.setPanel(panel);
-				new Thread(() -> new Simulation(app.getGroundModel(), app.getMower(), line).start()).start();
+		
+					new Thread(() -> new Simulation(app.getGroundModel(), app.getMower(), line).start()).start();
 			}
+		};
+
+		AbstractAction stopSimulationAction = new AbstractAction("Stop") {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				App app = App.getApp();
+				app.getSimulation().setStop(true);
+			}
+		};
+
+		AbstractAction resumeSimulationAction = new AbstractAction("Resume") {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				App app = App.getApp();
+				app.getSimulation().setResume(true);
+
+			}
+		};
+
+		AbstractAction simulationCancelAct = new AbstractAction("Cancel") {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				App app = App.getApp();
+				app.getSimulation().setStop(true);
+		
+			}
+			
 		};
 
 		JMenu simulationMenu = new JMenu("Simulation");
 		simulationMenu.add(startAction);
+		simulationMenu.add(stopSimulationAction);
+		simulationMenu.add(resumeSimulationAction);
+		simulationMenu.add(simulationCancelAct);
 		menu.add(simulationMenu);
 
 		return menu;

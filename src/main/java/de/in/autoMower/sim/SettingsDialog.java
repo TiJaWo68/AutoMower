@@ -1,6 +1,7 @@
 package de.in.autoMower.sim;
 
 import java.awt.GridLayout;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Locale;
 
@@ -19,17 +20,18 @@ public class SettingsDialog {
 		dialog.setTitle("Mower Specifications");
 		dialog.setLayout(new GridLayout(0, 2, 5, 5));
 
-		NumberFormat nf = NumberFormat.getCurrencyInstance(Locale.GERMANY);
+		
+		DecimalFormat df = new DecimalFormat("#.00");
 
 		JLabel jLTextWidth = new JLabel();
 		jLTextWidth.setText("   Width (cm)");
-		jTfWidth = new JFormattedTextField(nf);
-		jTfWidth.setText(String.valueOf(autoMoverModel.getMowingWidthInCm()));
+		jTfWidth = new JFormattedTextField(df);
+		jTfWidth.setText(String.valueOf(df.format(autoMoverModel.getMowingWidthInCm())));
 
 		JLabel jLTextSpeed = new JLabel();
 		jLTextSpeed.setText("   Speed (cm/sec)");
-		jTfSpeed = new JFormattedTextField(nf);
-		jTfSpeed.setText(String.valueOf(autoMoverModel.getSpeedInCmPerSec()));
+		jTfSpeed = new JFormattedTextField(df);
+		jTfSpeed.setText(String.valueOf(df.format(autoMoverModel.getSpeedInCmPerSec())));
 
 		JButton jBCancel = new JButton("Cancel");
 		jBCancel.addActionListener(e -> {
@@ -51,7 +53,7 @@ public class SettingsDialog {
 					autoMoverModel.setSpeedInCmPerSec(Double.parseDouble(jTfSpeed.getText()));
 
 			} catch (NumberFormatException ex) {
-				System.err.println("Incorrect format in width");
+				System.err.println("Incorrect format");
 				JOptionPane.showMessageDialog(null, "Incorrect format");
 			}
 		});

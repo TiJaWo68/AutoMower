@@ -17,6 +17,10 @@ package de.in.autoMower.sim;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
+
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 
 import javax.swing.JPanel;
@@ -48,6 +52,7 @@ public class SimulationPanel extends JPanel {
 	}
 
 	protected AffineTransform createAffineTransform() {
+
 		double width = 1d * getWidth();
 		double height = 1d * getHeight();
 		double iWidth = (1d * model.getImage().getWidth());
@@ -57,7 +62,34 @@ public class SimulationPanel extends JPanel {
 		double xoff = (width - zoom * iWidth) / 2d;
 		double yoff = (height - zoom * iHeight) / 2d;
 		transform.translate(xoff, yoff);
+
+		MouseWheelListener mouseZoom = new MouseWheelListener() {
+
+			@Override
+			public void mouseWheelMoved(MouseWheelEvent e) {
+				double scale = 1.0;
+
+				if (e.getWheelRotation() < 0) {
+					scale += (.1 * e.getWheelRotation());
+					scale = Math.max(0.1, scale);
+					Point p = e.getPoint();
+
+					AffineTransform transform = AffineTransform.getTranslateInstance(p.getX(), p.getY());
+					transform.scale(scale, scale);
+					transform.translate(-p.getX(), -p.getY());
+					revalidate();
+					repaint();
+
+					System.err.println("less");
+				} else
+					System.err.println("more");
+
+			}
+		};
+		addMouseWheelListener(mouseZoom);
+
 		return transform;
+
 	}
 
 	public void setModel(GroundModel model) {

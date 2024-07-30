@@ -6,6 +6,8 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Random;
 
+import javax.swing.JOptionPane;
+
 public class AutoMowerModel implements Serializable {
 
 	double speedInCmPerSec = 1000 / 36d;
@@ -15,6 +17,8 @@ public class AutoMowerModel implements Serializable {
 	Point2D destination = null;
 	Point2D currentPosition = null;
 	boolean stopped = true;
+	
+	private Line2D currentLine ;
 
 	public double getSpeedInCmPerSec() {
 		return speedInCmPerSec;
@@ -51,54 +55,78 @@ public class AutoMowerModel implements Serializable {
 	}
 
 	public void start(MultiLine2D line, GroundModel groundModel) {
-		Random random = new Random();
-		long startTime = System.currentTimeMillis();
-		Double cmProPixel = groundModel.getCalibration();
-		MultiLine2D border = groundModel.getBorder();
-		List<Line2D> collisionLines = List.of(border.getLine(1));
-		Line2D currentLine = new Line2D.Double(border.getPoint(0), border.getPoint(1));
-		currentPosition = new Point2D.Double(border.getPoint(0).getX(), border.getPoint(0).getY());
-		line.addPoint(border.getPoint(0));
-		line.addPoint(currentPosition);
-		stopped = false;
-		while (!stopped) {
+		try {
+			Random random = new Random();
+			long startTime = System.currentTimeMillis();
+			Double cmProPixel = groundModel.getCalibration();
+			MultiLine2D border = groundModel.getBorder();
+			List<Line2D> collisionLines = List.of(border.getLine(1));
 
-			if (currentPosition.equals(currentLine.getP2())) {
-				Line2D cl = collisionLines.size() == 2 ? random.nextBoolean() ? collisionLines.get(0) : collisionLines.get(1) : collisionLines.get(0);
-				double angle = GeomUtil.getAngleDeg(currentLine.getP1(), currentPosition, random.nextBoolean() ? cl.getP1() : cl.getP2());
-				angle *= random.nextDouble(1);
-				angle = angle * Math.PI / 180;
-				double targetX = currentLine.getP1().getX() * Math.sin(angle);
-				double targetY = currentLine.getP1().getY() * Math.cos(angle);
+			 currentLine = new Line2D.Double(border.getPoint(0), border.getPoint(1));
+			currentPosition = new Point2D.Double(border.getPoint(0).getX(), border.getPoint(0).getY());
+			line.addPoint(border.getPoint(0));
+			line.addPoint(currentPosition);
+			stopped = false;
 
-				currentLine = new Line2D.Double(currentPosition, new Point2D.Double(targetX, targetY));
-				// Strecke mit 10km Länge erzeugen, diese Entferung wird nie erreicht
-				Point2D p2 = GeomUtil.getColinearPointWithLength(currentLine.getP1(), currentLine.getP2(), 1000000d / cmProPixel);
+			while (!stopped) {
 
-				collisionLines = groundModel.getCollisionLines(currentPosition, p2);
-				Point2D cop = GeomUtil.getIntersectPoint(collisionLines.get(0), currentLine);
+				if (currentPosition.equals(currentLine.getP2())) {
+					Line2D cl = collisionLines.size() == 2
+							? random.nextBoolean() ? collisionLines.get(0) : collisionLines.get(1)
+							: collisionLines.get(0);
+					double angle = GeomUtil.getAngleDeg(currentLine.getP1(), currentPosition,
+							random.nextBoolean() ? cl.getP1() : cl.getP2());
+					angle *= random.nextDouble(1);
+					angle = angle * Math.PI / 180;
+					double targetX = currentLine.getP1().getX() * Math.sin(angle);
+					double targetY = currentLine.getP1().getY() * Math.cos(angle);
 
-				currentPosition = new Point2D.Double(currentPosition.getX(), currentPosition.getY());
-				line.addPoint(currentPosition);
-				currentLine = new Line2D.Double(currentPosition, cop);
-				System.out.println(currentLine.getP2());
+					currentLine = new Line2D.Double(currentPosition, new Point2D.Double(targetX, targetY));
+					// Strecke mit 10km Länge erzeugen, diese Entferung wird nie erreicht
+					Point2D p2 = GeomUtil.getColinearPointWithLength(currentLine.getP1(), currentLine.getP2(),
+							1000000d / cmProPixel);
+
+					collisionLines = groundModel.getCollisionLines(currentPosition, p2);
+					Point2D cop = GeomUtil.getIntersectPoint(collisionLines.get(0), currentLine);
+
+					currentPosition = new Point2D.Double(currentPosition.getX(), currentPosition.getY());
+					line.addPoint(currentPosition);
+					currentLine = new Line2D.Double(currentPosition, cop);
+					System.out.println(currentLine.getP2());
+				}
+
+				double diff = (System.currentTimeMillis() - startTime) / 1000d;
+				double distanceInCm = speedInCmPerSec * diff;
+				double pixelDistance = distanceInCm / cmProPixel;
+				Point2D cop = GeomUtil.getColinearPointWithLength(currentLine.getP1(), currentLine.getP2(),
+						pixelDistance);
+				if (currentLine.getP1().distance(cop) > currentLine.getP1().distance(currentLine.getP2()))
+					currentPosition.setLocation(currentLine.getP2());
+				else
+					currentPosition.setLocation(cop);
+				App.getApp().getPanel().repaint();
+
 			}
 
-			double diff = (System.currentTimeMillis() - startTime) / 1000d;
-			double distanceInCm = speedInCmPerSec * diff;
-			double pixelDistance = distanceInCm / cmProPixel;
-			Point2D cop = GeomUtil.getColinearPointWithLength(currentLine.getP1(), currentLine.getP2(), pixelDistance);
-			if (currentLine.getP1().distance(cop) > currentLine.getP1().distance(currentLine.getP2()))
-				currentPosition.setLocation(currentLine.getP2());
-			else
-				currentPosition.setLocation(cop);
-			App.getApp().getPanel().repaint();
+		} catch (NullPointerException ex) {
+			JOptionPane.showMessageDialog(null, "Please set a border line");
 		}
+
 	}
 
+	
 	public void stop() {
-		// TODO Auto-generated method stub
+		stopped = true;
+		currentPosition = new Point2D.Double(currentPosition.getX(), currentPosition.getY());
 
 	}
+	
+	public void resume() {
+		if (currentPosition.equals(currentLine.getP1())) {
+		stopped = false;
+		}
+}
+
+
 
 }
