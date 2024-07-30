@@ -14,11 +14,10 @@
 //@formatter:on
 package de.in.autoMower.sim;
 
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Point;
-
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
@@ -29,6 +28,8 @@ import javax.swing.JPanel;
  * @author aqadb - Till Woitendorf
  */
 public class SimulationPanel extends JPanel {
+
+	double scale = 1.0;
 
 	protected GroundModel model;
 	protected MultiLine2D line;
@@ -67,25 +68,25 @@ public class SimulationPanel extends JPanel {
 
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
-				double scale = 1.0;
 
-				if (e.getWheelRotation() < 0) {
-					scale += (.1 * e.getWheelRotation());
-					scale = Math.max(0.1, scale);
-					Point p = e.getPoint();
+				double scaleFactor = 0.01 * e.getPreciseWheelRotation();
+				scale += scaleFactor;
 
-					AffineTransform transform = AffineTransform.getTranslateInstance(p.getX(), p.getY());
-					transform.scale(scale, scale);
-					transform.translate(-p.getX(), -p.getY());
-					revalidate();
-					repaint();
+				revalidate();
+				repaint();
 
-					System.err.println("less");
-				} else
-					System.err.println("more");
-
+				System.err.println(scale);
 			}
+
 		};
+
+		Dimension size = new Dimension();
+		if (App.getApp().ground.getImage() != null) {
+			size.width = (int) Math.round(App.getApp().ground.getImage().getWidth() * scale);
+			size.height = (int) Math.round(App.getApp().ground.getImage().getWidth() * scale);
+		}
+		transform.scale(scale, scale);
+		System.err.println(size);
 		addMouseWheelListener(mouseZoom);
 
 		return transform;

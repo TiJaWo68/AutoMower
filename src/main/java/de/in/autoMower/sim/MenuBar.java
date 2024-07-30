@@ -60,12 +60,12 @@ public class MenuBar
                     ObjectInputStream ois = new ObjectInputStream( zf.getInputStream( ze ) );
                     GroundModel model = (GroundModel)ois.readObject();
                     
-                    ze = zf.getEntry( "autoMoverModel" );
+                    ze = zf.getEntry( "autoMowerModel" );
                     ois = new ObjectInputStream( zf.getInputStream( ze ) );
-                    AutoMowerModel autoMoverModel = (AutoMowerModel)ois.readObject();
+                    AutoMowerModel autoMowerModel = (AutoMowerModel)ois.readObject();
                     model.setImage( image );
                     app.setModel( model );
-                    app.setMower( autoMoverModel );
+                    app.setMower( autoMowerModel );
                 }
                 catch ( Exception ex )
                 {
