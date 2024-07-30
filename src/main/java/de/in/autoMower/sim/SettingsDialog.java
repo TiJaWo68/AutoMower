@@ -21,17 +21,18 @@ public class SettingsDialog {
 		dialog.setLayout(new GridLayout(0, 2, 5, 5));
 
 		
-		DecimalFormat df = new DecimalFormat("#.00");
+		NumberFormat numberformat = NumberFormat.getInstance(Locale.US);
+		numberformat.setMaximumFractionDigits(2);
 
 		JLabel jLTextWidth = new JLabel();
 		jLTextWidth.setText("   Width (cm)");
-		jTfWidth = new JFormattedTextField(df);
-		jTfWidth.setText(String.valueOf(df.format(autoMoverModel.getMowingWidthInCm())));
+		jTfWidth = new JFormattedTextField(numberformat);
+		jTfWidth.setText(String.valueOf(numberformat.format(autoMoverModel.getMowingWidthInCm())));
 
 		JLabel jLTextSpeed = new JLabel();
 		jLTextSpeed.setText("   Speed (cm/sec)");
-		jTfSpeed = new JFormattedTextField(df);
-		jTfSpeed.setText(String.valueOf(df.format(autoMoverModel.getSpeedInCmPerSec())));
+		jTfSpeed = new JFormattedTextField(numberformat);
+		jTfSpeed.setText(String.valueOf(numberformat.format(autoMoverModel.getSpeedInCmPerSec())));
 
 		JButton jBCancel = new JButton("Cancel");
 		jBCancel.addActionListener(e -> {
