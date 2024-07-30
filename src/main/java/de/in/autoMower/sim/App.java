@@ -41,7 +41,6 @@ public class App extends JFrame {
 		ground = new GroundModel();
 		panel = new SetupGroundPanel(ground);
 		mower = new AutoMowerModel();
-		simulation = new Simulation(ground, mower, null);
 		getContentPane().add(panel);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setMinimumSize(new Dimension(600, 600));
@@ -80,6 +79,11 @@ public class App extends JFrame {
 	
 	public Simulation getSimulation() {
 		return simulation;
+	}
+	
+	public Simulation createSimulation (MultiLine2D line) {
+        simulation = new Simulation(ground, mower, line);
+        return simulation;
 	}
 
 	public void setPanel(SimulationPanel panel) {

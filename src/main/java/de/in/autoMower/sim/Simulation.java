@@ -1,6 +1,6 @@
 package de.in.autoMower.sim;
 
-public class Simulation {
+public class Simulation implements Runnable {
 
 	GroundModel groundModel;
 
@@ -18,12 +18,18 @@ public class Simulation {
 
 	}
 
-	public void setStop(boolean canceled) {
+	public void stop() {
 		mower.stop();
 	}
 	
-	public void setResume(boolean forward) {
-		mower.resume();
+	public void resume() {
+		mower.runMower();
 	}
+
+    @Override
+    public void run()
+    {
+        mower.start(line, groundModel);
+    }
 
 }
