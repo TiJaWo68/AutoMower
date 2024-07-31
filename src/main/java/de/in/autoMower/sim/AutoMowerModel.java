@@ -6,8 +6,6 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Random;
 
-import javax.swing.JOptionPane;
-
 public class AutoMowerModel implements Serializable {
 
 	double speedInCmPerSec = 1000 / 36d;

@@ -1,7 +1,6 @@
 package de.in.autoMower.sim;
 
 import java.awt.GridLayout;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Locale;
 

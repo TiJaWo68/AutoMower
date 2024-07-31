@@ -23,12 +23,9 @@ import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.w3c.dom.DOMImplementationSource;
-
 public class MenuBar
 {
-    
-    // The inner class for the actions
+        // The inner class for the actions
     static abstract class MyAction extends AbstractAction
     {
         
@@ -117,7 +114,7 @@ public class MenuBar
             if ( fc.showSaveDialog( app ) == JFileChooser.APPROVE_OPTION )
             {
                 GroundModel groundModel = app.getGroundModel();
-                AutoMowerModel autoMoverModel = app.getMower();
+                AutoMowerModel autoMowerModel = app.getMower();
                 ;
                 System.out.println( "have fun " + fc.getSelectedFile().getAbsolutePath() );
                 try (ZipOutputStream zip = new ZipOutputStream( new FileOutputStream( fc.getSelectedFile() ) ))
@@ -133,7 +130,7 @@ public class MenuBar
                     ze = new ZipEntry( "autoMowerModel" );
                     zip.putNextEntry( ze );
                     oos = new ObjectOutputStream( zip );
-                    oos.writeObject( autoMoverModel );
+                    oos.writeObject( autoMowerModel );
                     
                 }
                 catch ( Exception ex )
@@ -164,8 +161,8 @@ public class MenuBar
         public void actionPerformed( ActionEvent e )
         {
             App app = App.getApp();
-            AutoMowerModel autoMoverModel = app.getMower();
-            new SettingsDialog( autoMoverModel );
+            AutoMowerModel autoMowerModel = app.getMower();
+            new SettingsDialog( autoMowerModel );
         }
         
     };

@@ -197,5 +197,4 @@ public class SetupGroundPanel extends SimulationPanel {
 		addMouseListener(mouseAdapter);
 		addMouseMotionListener(mouseAdapter);
 	}
-
 }

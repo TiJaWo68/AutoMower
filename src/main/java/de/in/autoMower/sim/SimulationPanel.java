@@ -89,7 +89,6 @@ public class SimulationPanel extends JPanel {
 			transform.scale(scale, scale);
 			transform.translate(-currentMouseX, -currentMouseY);
 		}
-
 		addMouseWheelListener(mouseZoom);
 		return transform;
 	}
