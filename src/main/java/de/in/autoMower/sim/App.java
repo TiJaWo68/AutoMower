@@ -7,6 +7,8 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 
 import javax.swing.JFrame;
+import javax.swing.JMenuBar;
+import javax.swing.JSlider;
 import javax.swing.WindowConstants;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
@@ -17,10 +19,11 @@ import com.formdev.flatlaf.FlatDarculaLaf;
 public class App extends JFrame {
 
 	private static App app;
-	GroundModel ground;
+	private GroundModel ground;
 	private SimulationPanel panel;
 	private AutoMowerModel mower;
 	private Simulation simulation;
+	private JSlider speedSlider;
 
 
 
@@ -47,7 +50,10 @@ public class App extends JFrame {
 		pack();
 
 		// Set the MenuBar
-		this.setJMenuBar(MenuBar.create());
+		JMenuBar menu = MenuBar.create();
+		speedSlider = MenuBar.createSpeedSlider( (int)mower.speedInCmPerSec);
+		menu.add( getSpeedSlider() );
+		this.setJMenuBar(menu);
 
 		setLocationRelativeTo(null);
 	}
@@ -94,5 +100,10 @@ public class App extends JFrame {
 		revalidate();
 		repaint();
 	}
+
+    public JSlider getSpeedSlider()
+    {
+        return speedSlider;
+    }
 
 }

@@ -19,6 +19,7 @@ import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
@@ -26,13 +27,16 @@ import java.awt.geom.Point2D;
 
 import javax.swing.JPanel;
 import javax.swing.JViewport;
+import javax.swing.event.MouseInputAdapter;
 
 /**
  * @author aqadb - Till Woitendorf
  */
 public class SimulationPanel extends JPanel {
 
-	double scale = 1.0;
+	private double scale = 1.0;
+	private double currentMouseX = 0;
+	private double currentMouseY = 0;
 
 	protected GroundModel model;
 	protected MultiLine2D line;
@@ -71,28 +75,26 @@ public class SimulationPanel extends JPanel {
 
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
-				double scaleFactor = 0.001 * e.getPreciseWheelRotation();
+				currentMouseX = e.getPoint().getX();
+				currentMouseY = e.getPoint().getY();
+
+				double scaleFactor = 0.0001 * e.getPreciseWheelRotation();
 				scale += scaleFactor;
 
-				revalidate();
 				repaint();
-
-				System.err.println(scale);
 			}
-
 		};
-		
+
 		Dimension size = new Dimension();
-		if (App.getApp().ground.getImage() != null) {
-			size.width = (int) Math.round(App.getApp().ground.getImage().getWidth() * scale);
-			size.height = (int) Math.round(App.getApp().ground.getImage().getWidth() * scale);
-		}
+
+		size.width = (int) Math.round(App.getApp().getGroundModel().getImage().getWidth() * scale);
+		size.height = (int) Math.round(App.getApp().getGroundModel().getImage().getWidth() * scale);
+
+		transform.translate(currentMouseX, currentMouseY);
 		transform.scale(scale, scale);
-		System.err.println(size);
+		transform.translate(-currentMouseX, -currentMouseY);
 		addMouseWheelListener(mouseZoom);
-
 		return transform;
-
 	}
 
 	public void setModel(GroundModel model) {
