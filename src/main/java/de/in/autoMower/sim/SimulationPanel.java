@@ -29,6 +29,7 @@ import javax.swing.JPanel;
 public class SimulationPanel extends JPanel {
 
 	private double scale = 1.0;
+	private double oldScale = 1.0;
 	private double currentMouseX = 0;
 	private double currentMouseY = 0;
 
@@ -88,7 +89,11 @@ public class SimulationPanel extends JPanel {
 			transform.translate(currentMouseX, currentMouseY);
 			transform.scale(scale, scale);
 			transform.translate(-currentMouseX, -currentMouseY);
+			oldScale = scale;
+		} else {
+		    scale = oldScale;
 		}
+		
 		addMouseWheelListener(mouseZoom);
 		return transform;
 	}
