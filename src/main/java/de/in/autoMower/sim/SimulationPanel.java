@@ -83,9 +83,9 @@ public class SimulationPanel extends JPanel {
 		};
 		
 		Dimension size = new Dimension();
-		if (App.getApp().ground.getImage() != null) {
-			size.width = (int) Math.round(App.getApp().ground.getImage().getWidth() * scale);
-			size.height = (int) Math.round(App.getApp().ground.getImage().getWidth() * scale);
+		if (App.getApp().getGroundModel().getImage() != null) {
+			size.width = (int) Math.round(App.getApp().getGroundModel().getImage().getWidth() * scale);
+			size.height = (int) Math.round(App.getApp().getGroundModel().getImage().getWidth() * scale);
 		}
 		transform.scale(scale, scale);
 		System.err.println(size);

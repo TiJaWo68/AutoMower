@@ -192,15 +192,22 @@ public class MenuBar
             public void actionPerformed( ActionEvent e )
             {
                 App app = App.getApp();
+                
                 MultiLine2D line = new MultiLine2D( Color.RED );
                 SimulationPanel panel = new SimulationPanel( app.getGroundModel() );
-                panel.setLine( line );
-                app.setPanel( panel );
                 
-                if(app.getSimulation() == null)
-                    new Thread(() -> app.createSimulation(line).start() ).start();
-                else
-                    app.getSimulation().resume();
+                if(app.getGroundModel().border.getNumberOfPoints() > 0) {
+                    
+                    panel.setLine( line );
+                    app.setPanel( panel );
+                    app.getSpeedSlider().setVisible( true );
+                    
+                    if(app.getSimulation() == null)
+                        new Thread(() -> app.createSimulation(line).start() ).start();
+                    else
+                        app.getSimulation().resume();
+                }
+                
             }
         };
         
@@ -247,7 +254,6 @@ public class MenuBar
         simulationMenu.add( simulationCancelAct );
         menu.add( simulationMenu );
         
-        menu.add(createSpeedSlider(null, null));
         return menu;
         
      
@@ -279,8 +285,8 @@ public class MenuBar
         return mowerMenu;
     }
     
-    private static JSlider createSpeedSlider(AutoMowerModel autoMowerModel, SettingsDialog speed) {
-    	
+    public static JSlider createSpeedSlider(int defaultValue) {
+    	        
 		JSlider sliderSpeed = new JSlider(JSlider.HORIZONTAL, 0, 100, 0);
 		sliderSpeed.setPaintLabels(true);
 		sliderSpeed.setMinorTickSpacing(5);
@@ -288,13 +294,16 @@ public class MenuBar
 		
 		sliderSpeed.setPaintTicks(true);
 		sliderSpeed.setName("Speed");
+		sliderSpeed.setValue( defaultValue );
+		sliderSpeed.setVisible( false );
+        
 		sliderSpeed.addChangeListener(new ChangeListener() {
 			
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				sliderSpeed.setValue(Integer.parseInt(speed.getjTfSpeed().getText()));
+			    App app = App.getApp();
 				System.out.println(sliderSpeed.getValue());
-				
+				app.getMower().setSpeedInCmPerSec( sliderSpeed.getValue() );
 			}
 		});
 		return sliderSpeed;
