@@ -18,16 +18,10 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
-
 import javax.swing.JPanel;
-import javax.swing.JViewport;
-import javax.swing.event.MouseInputAdapter;
 
 /**
  * @author aqadb - Till Woitendorf
@@ -86,13 +80,16 @@ public class SimulationPanel extends JPanel {
 		};
 
 		Dimension size = new Dimension();
-
 		size.width = (int) Math.round(App.getApp().getGroundModel().getImage().getWidth() * scale);
 		size.height = (int) Math.round(App.getApp().getGroundModel().getImage().getWidth() * scale);
 
-		transform.translate(currentMouseX, currentMouseY);
-		transform.scale(scale, scale);
-		transform.translate(-currentMouseX, -currentMouseY);
+		if (size.width > App.getApp().getGroundModel().getImage().getWidth()
+				&& size.height > App.getApp().getGroundModel().getImage().getHeight()) {
+			transform.translate(currentMouseX, currentMouseY);
+			transform.scale(scale, scale);
+			transform.translate(-currentMouseX, -currentMouseY);
+		}
+
 		addMouseWheelListener(mouseZoom);
 		return transform;
 	}
@@ -110,5 +107,4 @@ public class SimulationPanel extends JPanel {
 	public void setLine(MultiLine2D line) {
 		this.line = line;
 	}
-
 }
