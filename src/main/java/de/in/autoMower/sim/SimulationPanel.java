@@ -18,11 +18,14 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 
 import javax.swing.JPanel;
+import javax.swing.JViewport;
 
 /**
  * @author aqadb - Till Woitendorf
@@ -68,8 +71,7 @@ public class SimulationPanel extends JPanel {
 
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
-
-				double scaleFactor = 0.01 * e.getPreciseWheelRotation();
+				double scaleFactor = 0.001 * e.getPreciseWheelRotation();
 				scale += scaleFactor;
 
 				revalidate();
@@ -79,7 +81,7 @@ public class SimulationPanel extends JPanel {
 			}
 
 		};
-
+		
 		Dimension size = new Dimension();
 		if (App.getApp().ground.getImage() != null) {
 			size.width = (int) Math.round(App.getApp().ground.getImage().getWidth() * scale);

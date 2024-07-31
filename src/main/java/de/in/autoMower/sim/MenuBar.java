@@ -18,7 +18,10 @@ import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JSlider;
 import javax.swing.KeyStroke;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.w3c.dom.DOMImplementationSource;
 
@@ -181,7 +184,7 @@ public class MenuBar
         
         // The mower menu is inserted in the menu bar
         menu.add( createMowerMenu() );
-        
+                  
         AbstractAction startAction = new AbstractAction( "Start " )
         {
             
@@ -244,11 +247,15 @@ public class MenuBar
         simulationMenu.add( simulationCancelAct );
         menu.add( simulationMenu );
         
+        menu.add(createSpeedSlider(null, null));
         return menu;
+        
+     
         
     } // End of method menuBar()
     
-    // The method for Menu File
+   
+	// The method for Menu File
     private static JMenu createFileMenu()
     {
         JMenu fileMenu = new JMenu();
@@ -271,5 +278,27 @@ public class MenuBar
         mowerMenu.add( mowerDataAct );
         return mowerMenu;
     }
+    
+    private static JSlider createSpeedSlider(AutoMowerModel autoMowerModel, SettingsDialog speed) {
+    	
+		JSlider sliderSpeed = new JSlider(JSlider.HORIZONTAL, 0, 100, 0);
+		sliderSpeed.setPaintLabels(true);
+		sliderSpeed.setMinorTickSpacing(5);
+		sliderSpeed.setMajorTickSpacing(10);
+		
+		sliderSpeed.setPaintTicks(true);
+		sliderSpeed.setName("Speed");
+		sliderSpeed.addChangeListener(new ChangeListener() {
+			
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				sliderSpeed.setValue(Integer.parseInt(speed.getjTfSpeed().getText()));
+				System.out.println(sliderSpeed.getValue());
+				
+			}
+		});
+		return sliderSpeed;
+	}
+
     
 }

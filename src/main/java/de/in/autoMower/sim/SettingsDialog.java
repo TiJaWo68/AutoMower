@@ -13,9 +13,9 @@ import javax.swing.JOptionPane;
 
 public class SettingsDialog {
 
-	JFormattedTextField jTfSpeed, jTfWidth;
+	protected JFormattedTextField jTfSpeed, jTfWidth;
 
-	public SettingsDialog(AutoMowerModel autoMoverModel) {
+	public SettingsDialog(AutoMowerModel autoMowerModel) {
 		JDialog dialog = new JDialog();
 		dialog.setTitle("Mower Specifications");
 		dialog.setLayout(new GridLayout(0, 2, 5, 5));
@@ -27,12 +27,12 @@ public class SettingsDialog {
 		JLabel jLTextWidth = new JLabel();
 		jLTextWidth.setText("   Width (cm)");
 		jTfWidth = new JFormattedTextField(numberformat);
-		jTfWidth.setText(String.valueOf(numberformat.format(autoMoverModel.getMowingWidthInCm())));
+		jTfWidth.setText(String.valueOf(numberformat.format(autoMowerModel.getMowingWidthInCm())));
 
 		JLabel jLTextSpeed = new JLabel();
 		jLTextSpeed.setText("   Speed (cm/sec)");
 		jTfSpeed = new JFormattedTextField(numberformat);
-		jTfSpeed.setText(String.valueOf(numberformat.format(autoMoverModel.getSpeedInCmPerSec())));
+		jTfSpeed.setText(String.valueOf(numberformat.format(autoMowerModel.getSpeedInCmPerSec())));
 
 		JButton jBCancel = new JButton("Cancel");
 		jBCancel.addActionListener(e -> {
@@ -46,12 +46,12 @@ public class SettingsDialog {
 				if (jTfWidth.getText().isEmpty())
 					JOptionPane.showMessageDialog(null, "Please insert the width of mover");
 				else
-					autoMoverModel.setMowingWidthInCm(Double.parseDouble(jTfWidth.getText()));
+					autoMowerModel.setMowingWidthInCm(Double.parseDouble(jTfWidth.getText()));
 
 				if (jTfSpeed.getText().isEmpty())
 					JOptionPane.showMessageDialog(null, "Please insert the speed of mover");
 				else
-					autoMoverModel.setSpeedInCmPerSec(Double.parseDouble(jTfSpeed.getText()));
+					autoMowerModel.setSpeedInCmPerSec(Double.parseDouble(jTfSpeed.getText()));
 
 			} catch (NumberFormatException ex) {
 				System.err.println("Incorrect format");
@@ -72,6 +72,10 @@ public class SettingsDialog {
 		dialog.add(jbSave);
 		dialog.setModal(true);
 		dialog.setVisible(true);
+	}
+
+	public JFormattedTextField getjTfSpeed() {
+		return jTfSpeed;
 	}
 
 }
