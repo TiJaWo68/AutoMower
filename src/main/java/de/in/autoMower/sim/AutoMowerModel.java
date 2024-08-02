@@ -126,14 +126,16 @@ public class AutoMowerModel implements Serializable {
 
 	public void stop() {
 		stopped = true;
-		currentPosition = new Point2D.Double(currentPosition.getX(), currentPosition.getY());
 
 	}
 
 	public void resume() {
-		if (currentPosition.equals(currentLine.getP1())) {
-			stopped = false;
-		}
+
+	}
+
+	public void cancel() {
+	
+	
 	}
 
 }

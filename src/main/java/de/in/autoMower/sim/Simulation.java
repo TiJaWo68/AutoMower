@@ -13,7 +13,7 @@ public class Simulation implements Runnable {
 	AutoMowerModel mower;
 	MultiLine2D line;
 
-	public void start() {
+	public void run() {
 		mower.start(line, groundModel);
 
 	}
@@ -23,13 +23,12 @@ public class Simulation implements Runnable {
 	}
 	
 	public void resume() {
-		mower.runMower();
+		mower.resume();
 	}
 
-    @Override
-    public void run()
-    {
-        mower.start(line, groundModel);
-    }
+	public void cancel() {
+		mower.cancel();
+		
+	}
 
-}
+   }

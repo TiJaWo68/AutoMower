@@ -67,14 +67,18 @@ public class SimulationPanel extends JPanel {
 		transform.translate(xoff, yoff);
 
 		MouseWheelListener mouseZoom = new MouseWheelListener() {
+			double scaleFactor = 0.0001;
 
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
 				currentMouseX = e.getPoint().getX();
 				currentMouseY = e.getPoint().getY();
 
-				double scaleFactor = 0.0001 * e.getPreciseWheelRotation();
-				scale += scaleFactor;
+				if (e.getWheelRotation() < 0)
+					scale += scaleFactor;
+
+				else
+					scale -= scaleFactor;
 
 				repaint();
 			}
@@ -90,10 +94,9 @@ public class SimulationPanel extends JPanel {
 			transform.scale(scale, scale);
 			transform.translate(-currentMouseX, -currentMouseY);
 			oldScale = scale;
-		} else {
-		    scale = oldScale;
-		}
-		
+		} else
+			scale = oldScale;
+
 		addMouseWheelListener(mouseZoom);
 		return transform;
 	}
