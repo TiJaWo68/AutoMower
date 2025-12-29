@@ -3,14 +3,11 @@ package de.in.autoMower.sim;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
+import java.util.Base64;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -18,10 +15,13 @@ import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
 import javax.swing.JSlider;
 import javax.swing.KeyStroke;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 public class MenuBar {
 	// The inner class for the actions
@@ -40,25 +40,14 @@ public class MenuBar {
 	static MyAction openProjectAct = new MyAction("Open Project", null, "Opens an existing project", null, "open") {
 		JFileChooser fc = new JFileChooser(new File("."));
 
+		{
+			fc.setFileFilter(new FileNameExtensionFilter("JSON Project", "json"));
+		}
+
 		public void actionPerformed(ActionEvent e) {
 			if (fc.showOpenDialog(fc) == JFileChooser.APPROVE_OPTION) {
-				App app = App.getApp();
-
-				try (ZipFile zf = new ZipFile(fc.getSelectedFile())) {
-
-					ZipEntry ze = zf.getEntry("image");
-					BufferedImage image = ImageIO.read(zf.getInputStream(ze));
-					ze = zf.getEntry("groundModel");
-
-					ObjectInputStream ois = new ObjectInputStream(zf.getInputStream(ze));
-					GroundModel model = (GroundModel) ois.readObject();
-
-					ze = zf.getEntry("autoMowerModel");
-					ois = new ObjectInputStream(zf.getInputStream(ze));
-					AutoMowerModel autoMowerModel = (AutoMowerModel) ois.readObject();
-					model.setImage(image);
-					app.setModel(model);
-					app.setMower(autoMowerModel);
+				try {
+					App.getApp().loadProject(fc.getSelectedFile());
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
@@ -89,31 +78,47 @@ public class MenuBar {
 
 	};
 
-	static MyAction saveProjectAct = new MyAction("Save Project", null, "Saves the project in a zip file", null,
+	static MyAction saveProjectAct = new MyAction("Save Project", null, "Saves the project in a json file", null,
 			"save") {
 		JFileChooser fc = new JFileChooser(new File("."));
+
+		{
+			fc.setFileFilter(new FileNameExtensionFilter("JSON Project", "json"));
+		}
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			App app = App.getApp();
+
 			if (fc.showSaveDialog(app) == JFileChooser.APPROVE_OPTION) {
+				File file = fc.getSelectedFile();
+				if (file != null && !file.getName().toLowerCase().endsWith(".json")) {
+					file = new File(file.getParentFile(), file.getName() + ".json");
+				}
+
 				GroundModel groundModel = app.getGroundModel();
 				AutoMowerModel autoMowerModel = app.getMower();
-				;
-				System.out.println("have fun " + fc.getSelectedFile().getAbsolutePath());
-				try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(fc.getSelectedFile()))) {
-					ZipEntry ze = new ZipEntry("groundModel");
-					zip.putNextEntry(ze);
-					ObjectOutputStream oos = new ObjectOutputStream(zip);
-					oos.writeObject(groundModel);
-					ze = new ZipEntry("image");
-					zip.putNextEntry(ze);
-					ImageIO.write(groundModel.getImage(), "png", zip);
 
-					ze = new ZipEntry("autoMowerModel");
-					zip.putNextEntry(ze);
-					oos = new ObjectOutputStream(zip);
-					oos.writeObject(autoMowerModel);
+				try {
+					ProjectData data = new ProjectData();
+					data.calibration = groundModel.getCalibration();
+					data.border = new ProjectData.MultiLineDTO(groundModel.getBorder());
+					data.obstacles = groundModel.obstacles.stream().map(ProjectData.MultiLineDTO::new)
+							.collect(Collectors.toList());
+					data.mower = new ProjectData.MowerDTO(autoMowerModel);
+					if (groundModel.getChargingStation() != null) {
+						data.chargingStation = new ProjectData.PointDTO(groundModel.getChargingStation());
+					}
+
+					if (groundModel.getImage() != null) {
+						ByteArrayOutputStream baos = new ByteArrayOutputStream();
+						ImageIO.write(groundModel.getImage(), "png", baos);
+						data.backgroundImageBase64 = Base64.getEncoder().encodeToString(baos.toByteArray());
+					}
+
+					ObjectMapper mapper = new ObjectMapper();
+					mapper.enable(SerializationFeature.INDENT_OUTPUT);
+					mapper.writeValue(file, data);
 
 				} catch (Exception ex) {
 					ex.printStackTrace();
@@ -144,8 +149,6 @@ public class MenuBar {
 		}
 
 	};
-
-	private static Thread t = null;
 
 	// The method for the menuBar
 	public static JMenuBar create() {
@@ -207,16 +210,83 @@ public class MenuBar {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				App app = App.getApp();
-				app.getSimulation().cancel();
-
+				if (app.getSimulation() != null) {
+					app.getSimulation().cancel();
+					app.resetSimulation();
+				}
+				app.setPanel(new SetupGroundPanel(app.getGroundModel()));
+				app.getSpeedSlider().setVisible(false);
 			}
 
 		};
 
+		AbstractAction estimateTimeAct = new AbstractAction("Estimate Mowing Time") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				App app = App.getApp();
+				GroundModel ground = app.getGroundModel();
+				AutoMowerModel mower = app.getMower();
+
+				double areaCm2 = ground.getNetArea();
+				double areaM2 = areaCm2 / 10000.0;
+
+				double speed = mower.getSpeedInCmPerSec();
+				double width = mower.getMowingWidthInCm();
+
+				if (speed <= 0 || width <= 0) {
+					JOptionPane.showMessageDialog(app, "Please set valid mower speed and width in Mower -> Data.",
+							"Estimation Error",
+							JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+
+				double timeSeconds = areaCm2 / (speed * width);
+
+				int hours = (int) (timeSeconds / 3600);
+				int minutes = (int) ((timeSeconds % 3600) / 60);
+				int seconds = (int) (timeSeconds % 60);
+
+				String timeStr = String.format("%dh %dm %ds", hours, minutes, seconds);
+				if (hours == 0) {
+					timeStr = String.format("%dm %ds", minutes, seconds);
+				}
+
+				String message = String.format("Net Mowing Area: %.2f m²\nEstimated Mowing Time: %s", areaM2, timeStr);
+				JOptionPane.showMessageDialog(app, message, "Mowing Estimation", JOptionPane.INFORMATION_MESSAGE);
+			}
+		};
+
+		AbstractAction kantenschneidenAction = new AbstractAction("Kantenschneiden") {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				App app = App.getApp();
+
+				MultiLine2D line = new MultiLine2D(Color.RED);
+				SimulationPanel panel = new SimulationPanel(app.getGroundModel());
+
+				if (app.getGroundModel().border.getNumberOfPoints() > 0) {
+
+					panel.setLine(line);
+					app.setPanel(panel);
+					app.getSpeedSlider().setVisible(true);
+
+					if (app.getSimulation() == null) {
+						Simulation sim = app.createSimulation(line);
+						new Thread(() -> app.getMower().startEdgeCutting(line, app.getGroundModel())).start();
+					} else {
+						app.getSimulation().resume();
+					}
+				}
+			}
+		};
+
 		JMenu simulationMenu = new JMenu("Simulation");
 		simulationMenu.add(startAction);
+		simulationMenu.add(kantenschneidenAction);
 		simulationMenu.add(stopSimulationAction);
 		simulationMenu.add(resumeSimulationAction);
+		simulationMenu.add(estimateTimeAct);
 		simulationMenu.add(simulationCancelAct);
 		menu.add(simulationMenu);
 
@@ -248,21 +318,18 @@ public class MenuBar {
 
 	public static JSlider createSpeedSlider(int defaultValue) {
 
-		JSlider sliderSpeed = new JSlider(JSlider.HORIZONTAL, 0, 100, 0);
+		JSlider sliderSpeed = new JSlider(JSlider.HORIZONTAL, 1, 50, 1);
 		sliderSpeed.setPaintLabels(true);
-		sliderSpeed.setMinorTickSpacing(5);
+		sliderSpeed.setMinorTickSpacing(1);
 		sliderSpeed.setMajorTickSpacing(10);
 		sliderSpeed.setPaintTicks(true);
-		sliderSpeed.setValue(defaultValue);
+		sliderSpeed.setValue(1);
 		sliderSpeed.setVisible(false);
+		sliderSpeed.setToolTipText("Simulation Speed Scaling");
 
-		sliderSpeed.addChangeListener(new ChangeListener() {
-
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				App app = App.getApp();
-				app.getMower().setSpeedInCmPerSec(sliderSpeed.getValue());
-			}
+		sliderSpeed.addChangeListener(e -> {
+			App app = App.getApp();
+			app.getMower().setTimeScale(sliderSpeed.getValue());
 		});
 		return sliderSpeed;
 	}
