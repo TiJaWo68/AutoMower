@@ -55,8 +55,7 @@ public class MenuBar {
 			}
 		}
 	};
-	static MyAction changeImageAct = new MyAction("Change Image", null, "Change picture in the project", null,
-			"change") {
+	static MyAction changeImageAct = new MyAction("Change Image", null, "Change picture in the project", null, "change") {
 
 		JFileChooser fc = new JFileChooser(new File("."));
 
@@ -78,8 +77,7 @@ public class MenuBar {
 
 	};
 
-	static MyAction saveProjectAct = new MyAction("Save Project", null, "Saves the project in a json file", null,
-			"save") {
+	static MyAction saveProjectAct = new MyAction("Save Project", null, "Saves the project in a json file", null, "save") {
 		JFileChooser fc = new JFileChooser(new File("."));
 
 		{
@@ -103,8 +101,7 @@ public class MenuBar {
 					ProjectData data = new ProjectData();
 					data.calibration = groundModel.getCalibration();
 					data.border = new ProjectData.MultiLineDTO(groundModel.getBorder());
-					data.obstacles = groundModel.obstacles.stream().map(ProjectData.MultiLineDTO::new)
-							.collect(Collectors.toList());
+					data.obstacles = groundModel.obstacles.stream().map(ProjectData.MultiLineDTO::new).collect(Collectors.toList());
 					data.mower = new ProjectData.MowerDTO(autoMowerModel);
 					if (groundModel.getChargingStation() != null) {
 						data.chargingStation = new ProjectData.PointDTO(groundModel.getChargingStation());
@@ -138,8 +135,7 @@ public class MenuBar {
 
 	};
 
-	static MyAction mowerDataAct = new MyAction("Data", null, "You can enter the data for the mower here", null,
-			"data") {
+	static MyAction mowerDataAct = new MyAction("Data", null, "You can enter the data for the mower here", null, "data") {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
@@ -234,8 +230,7 @@ public class MenuBar {
 				double width = mower.getMowingWidthInCm();
 
 				if (speed <= 0 || width <= 0) {
-					JOptionPane.showMessageDialog(app, "Please set valid mower speed and width in Mower -> Data.",
-							"Estimation Error",
+					JOptionPane.showMessageDialog(app, "Please set valid mower speed and width in Mower -> Data.", "Estimation Error",
 							JOptionPane.ERROR_MESSAGE);
 					return;
 				}
@@ -272,7 +267,7 @@ public class MenuBar {
 					app.getSpeedSlider().setVisible(true);
 
 					if (app.getSimulation() == null) {
-						Simulation sim = app.createSimulation(line);
+						app.createSimulation(line);
 						new Thread(() -> app.getMower().startEdgeCutting(line, app.getGroundModel())).start();
 					} else {
 						app.getSimulation().resume();
