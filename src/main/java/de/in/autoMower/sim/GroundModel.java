@@ -7,13 +7,10 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.imageio.ImageIO;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -23,6 +20,7 @@ public class GroundModel implements Serializable {
 
 	public static final Color BORDER_COLOR = Color.ORANGE;
 	public static final Color OBSTACLE_COLOR = Color.CYAN;
+	public static final Color CHARGING_STATION_COLOR = Color.GREEN;
 	protected Point2D highLightedPoint = null;
 	protected Line2D highLightedLine = null;
 
@@ -41,6 +39,7 @@ public class GroundModel implements Serializable {
 	Double calibration = 10d;
 
 	private transient BufferedImage image;
+	private Point2D chargingStation;
 
 	public BufferedImage getImage() {
 		return image;
@@ -53,11 +52,7 @@ public class GroundModel implements Serializable {
 	}
 
 	public GroundModel() {
-		try {
-			image = ImageIO.read(new File("ground.png"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		border.setShowIndices(true);
 	}
 
 	public MultiLine2D getBorder() {
@@ -66,7 +61,12 @@ public class GroundModel implements Serializable {
 
 	public void setBorder(MultiLine2D border) {
 		this.border = border;
+		updateNumbering();
 		listener.stateChanged(new ChangeEvent(this));
+	}
+
+	public List<MultiLine2D> getObstacles() {
+		return obstacles;
 	}
 
 	public void addObstacle(MultiLine2D obstacle) {
@@ -99,6 +99,13 @@ public class GroundModel implements Serializable {
 			Point2D p = transform.transform(highLightedPoint, new Point2D.Double());
 			g2d.drawOval((int) (p.getX() - MultiLine2D.ED), (int) (p.getY() - MultiLine2D.ED), 2 * MultiLine2D.ED,
 					2 * MultiLine2D.ED);
+		}
+
+		if (chargingStation != null) {
+			g2d.setColor(CHARGING_STATION_COLOR);
+			Point2D p = transform.transform(chargingStation, new Point2D.Double());
+			g2d.fillOval((int) (p.getX() - 5), (int) (p.getY() - 5), 10, 10);
+			g2d.drawOval((int) (p.getX() - 7), (int) (p.getY() - 7), 14, 14);
 		}
 
 	}
@@ -141,6 +148,20 @@ public class GroundModel implements Serializable {
 		calibration = lengthInCM / Math.sqrt(x * x + y * y);
 	}
 
+	public void setCalibration(Double calibration) {
+		this.calibration = calibration;
+	}
+
+	public Point2D getChargingStation() {
+		return chargingStation;
+	}
+
+	public void setChargingStation(Point2D chargingStation) {
+		this.chargingStation = chargingStation;
+		updateNumbering();
+		listener.stateChanged(new ChangeEvent(this));
+	}
+
 	public List<Line2D> getCollisionLines(Point2D p1, Point2D p2) {
 		Line2D given = new Line2D.Double(p1, p2);
 		List<Line2D> result = new LinkedList<>();
@@ -151,9 +172,10 @@ public class GroundModel implements Serializable {
 			for (int i = 0; i < line.getNumberOfPoints(); i++) {
 				Line2D l = line.getLine(i);
 				Point2D intersectPoint = GeomUtil.getIntersectPoint(l, given);
-				if (intersectPoint != null) {
+				if (intersectPoint != null && l.ptSegDist(intersectPoint) < 0.05
+						&& given.ptSegDist(intersectPoint) < 0.05) {
 					double distance = p1.distance(intersectPoint);
-					if (distance > 0)
+					if (distance > 0.05)
 						if (distance < distanceToP1) {
 							distanceToP1 = distance;
 							result = List.of(l);
@@ -176,7 +198,8 @@ public class GroundModel implements Serializable {
 			for (int i = 0; i < line.getNumberOfPoints(); i++) {
 				Line2D l = line.getLine(i);
 				Point2D intersectPoint = GeomUtil.getIntersectPoint(l, given);
-				if (intersectPoint != null) {
+				if (intersectPoint != null && l.ptSegDist(intersectPoint) < 0.05
+						&& given.ptSegDist(intersectPoint) < 0.05) {
 					double distance = p1.distance(intersectPoint);
 					if (distance < distanceToP1) {
 						distanceToP1 = distance;
@@ -189,5 +212,92 @@ public class GroundModel implements Serializable {
 
 	public Double getCalibration() {
 		return calibration;
+	}
+
+	public double getNetArea() {
+		double netAreaPx = border.getArea();
+		for (MultiLine2D obstacle : obstacles) {
+			netAreaPx -= obstacle.getArea();
+		}
+		return netAreaPx * calibration * calibration;
+	}
+
+	public boolean isInside(Point2D p) {
+		return isInside(p, 1.0);
+	}
+
+	public boolean isInside(Point2D p, double eps) {
+		if (border != null && !border.contains(p)) {
+			if (border.ptSegDist(p) > eps) {
+				return false;
+			}
+		}
+		for (MultiLine2D obstacle : obstacles) {
+			if (obstacle.contains(p)) {
+				if (obstacle.ptSegDist(p) > eps) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	public Line2D getCollidingLine(Line2D check) {
+		List<Line2D> closest = getCollisionLines(check.getP1(), check.getP2());
+		if (closest.isEmpty())
+			return null;
+		return closest.get(0);
+	}
+
+	public void ensureChargingStationInside() {
+		if (chargingStation == null || isInside(chargingStation))
+			return;
+
+		// Try to nudge it inside in 8 directions (up to 10px each)
+		for (int dist = 1; dist <= 10; dist++) {
+			for (int ang = 0; ang < 360; ang += 45) {
+				double rad = Math.toRadians(ang);
+				Point2D test = new Point2D.Double(chargingStation.getX() + Math.cos(rad) * dist,
+						chargingStation.getY() + Math.sin(rad) * dist);
+				if (isInside(test)) {
+					chargingStation.setLocation(test);
+					updateNumbering();
+					return;
+				}
+			}
+		}
+	}
+
+	public void updateNumbering() {
+		if (chargingStation == null || border == null || border.getNumberOfPoints() == 0)
+			return;
+
+		int nearestIdx = 0;
+		double minDist = Double.MAX_VALUE;
+		List<Point2D> pts = border.getPoints();
+		for (int i = 0; i < pts.size(); i++) {
+			double d = pts.get(i).distance(chargingStation);
+			if (d < minDist) {
+				minDist = d;
+				nearestIdx = i;
+			}
+		}
+
+		// Determine "left" direction from dock's perspective (to match AutoMowerModel)
+		int direction = 1;
+		Point2D v = border.getPoint(nearestIdx);
+		int nextIdx = (nearestIdx + 1) % border.getNumberOfPoints();
+		Point2D vNext = border.getPoint(nextIdx);
+
+		double dx_f = v.getX() - chargingStation.getX();
+		double dy_f = v.getY() - chargingStation.getY();
+		double dx_v = vNext.getX() - v.getX();
+		double dy_v = vNext.getY() - v.getY();
+
+		double det = dx_f * dy_v - dy_f * dx_v;
+		direction = (det > 0) ? -1 : 1;
+
+		border.setNumberingStartAndDirection(nearestIdx, direction);
+		border.setShowIndices(true);
 	}
 }
