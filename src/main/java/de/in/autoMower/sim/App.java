@@ -34,8 +34,8 @@ public class App extends JFrame {
 	private AutoMowerModel mower;
 	private Simulation simulation;
 	private JSlider speedSlider;
-	private LogPanel logPanel;
-	private javax.swing.JSplitPane splitPane;
+	// private LogPanel logPanel;
+	// private javax.swing.JSplitPane splitPane;
 
 	/**
 	 * @param args
@@ -64,11 +64,12 @@ public class App extends JFrame {
 		panel = new SetupGroundPanel(ground);
 		mower = new AutoMowerModel();
 
-		logPanel = new LogPanel();
-		splitPane = new javax.swing.JSplitPane(javax.swing.JSplitPane.VERTICAL_SPLIT, panel, logPanel);
-		splitPane.setResizeWeight(0.8); // 80% space for simulation
+		// logPanel = new LogPanel();
+		// splitPane = new javax.swing.JSplitPane(javax.swing.JSplitPane.VERTICAL_SPLIT,
+		// panel, logPanel);
+		// splitPane.setResizeWeight(0.8); // 80% space for simulation
 
-		getContentPane().add(splitPane);
+		getContentPane().add(panel);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setMinimumSize(new Dimension(600, 600));
 		pack();
@@ -82,11 +83,11 @@ public class App extends JFrame {
 		setLocationRelativeTo(null);
 	}
 
-	public void log(String message) {
-		if (logPanel != null) {
-			logPanel.log(message);
-		}
-	}
+	// public void log(String message) {
+	// if (logPanel != null) {
+	// logPanel.log(message);
+	// }
+	// }
 
 	public GroundModel getGroundModel() {
 		return ground;
@@ -127,8 +128,11 @@ public class App extends JFrame {
 	}
 
 	public void setPanel(SimulationPanel panel) {
+		if (this.panel != null) {
+			getContentPane().remove(this.panel);
+		}
 		this.panel = panel;
-		splitPane.setTopComponent(panel);
+		getContentPane().add(panel);
 		revalidate();
 		repaint();
 	}
