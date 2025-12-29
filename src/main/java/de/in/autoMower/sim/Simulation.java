@@ -21,14 +21,14 @@ public class Simulation implements Runnable {
 	public void stop() {
 		mower.stop();
 	}
-	
+
 	public void resume() {
 		mower.resume();
 	}
 
 	public void cancel() {
 		mower.cancel();
-		
+
 	}
 
-   }
+}
