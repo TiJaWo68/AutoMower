@@ -283,6 +283,9 @@ public class GroundModel implements Serializable {
 			}
 		}
 
+		// Snap to nearest vertex
+		chargingStation.setLocation(pts.get(nearestIdx));
+
 		// Determine "left" direction from dock's perspective (to match AutoMowerModel)
 		int direction = 1;
 		Point2D v = border.getPoint(nearestIdx);
