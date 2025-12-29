@@ -1,11 +1,12 @@
 package de.in.autoMower.sim;
 
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.io.File;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import java.awt.geom.Point2D;
-import java.awt.geom.Line2D;
-import java.awt.Color;
-import java.io.File;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ConcavePathTest {

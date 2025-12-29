@@ -1,13 +1,13 @@
 package de.in.autoMower.sim;
 
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.io.File;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import java.awt.geom.Point2D;
-import java.awt.geom.Line2D;
-import java.util.ArrayList;
-import java.util.List;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.File;
 
 public class ChargingResumptionTest {
 
