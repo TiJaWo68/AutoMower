@@ -136,8 +136,8 @@ public class SetupGroundPanel extends SimulationPanel {
 					Line2D line = obstacle.getLine2D(tp);
 					if (line != null) {
 						JFormattedTextField textfield = new JFormattedTextField(new DecimalFormat("ddd"));
-						int result = JOptionPane.showConfirmDialog(SetupGroundPanel.this, textfield,
-								"Enter length in cm for selected line", JOptionPane.OK_CANCEL_OPTION);
+						int result = JOptionPane.showConfirmDialog(SetupGroundPanel.this, textfield, "Enter length in cm for selected line",
+								JOptionPane.OK_CANCEL_OPTION);
 						if (result == JOptionPane.OK_OPTION) {
 							int length = Integer.parseInt(textfield.getText());
 							model.setCalibration(line, length);
@@ -149,21 +149,35 @@ public class SetupGroundPanel extends SimulationPanel {
 			}
 		}
 	};
+	protected DelegatedMouseAdapter chargingStationMA = new DelegatedMouseAdapter() {
+		@Override
+		public void mouseClicked(MouseEvent me) {
+			try {
+				Point2D tp = createAffineTransform().inverseTransform(me.getPoint(), new Point2D.Double());
+				model.setChargingStation(tp);
+			} catch (NoninvertibleTransformException ex) {
+				ex.printStackTrace();
+			}
+		}
+	};
 
 	DelegatedMouseAdapter delegate = null;
+	private JButton hamburgerBtn;
 
 	public SetupGroundPanel(GroundModel model) {
 		super(model);
-		JButton button = new JButton(new HamburgerMenuIcon(30));
-		button.addActionListener(e -> {
+		hamburgerBtn = new JButton(new HamburgerMenuIcon(30));
+		hamburgerBtn.addActionListener(e -> {
 			JPopupMenu menu = new JPopupMenu();
 			menu.add(new SetDelegateMouseAdapter("set border", setBorderMA));
 			menu.add(new SetDelegateMouseAdapter("new obstacle", addObstacleMA));
 			menu.add(new SetDelegateMouseAdapter("remove obstacle", removeObstacleMA));
 			menu.add(new SetDelegateMouseAdapter("calibrate", calibrateMA));
-			menu.show(button, 0, 0);
+			menu.add(new SetDelegateMouseAdapter("Ladestation", chargingStationMA));
+			menu.show(hamburgerBtn, 0, 0);
 		});
-		add(button);
+		add(hamburgerBtn);
+		updateHamburgerVisibility();
 
 		MouseAdapter mouseAdapter = new MouseAdapter() {
 			@Override
@@ -198,5 +212,16 @@ public class SetupGroundPanel extends SimulationPanel {
 		};
 		addMouseListener(mouseAdapter);
 		addMouseMotionListener(mouseAdapter);
+	}
+
+	@Override
+	protected void onModelChanged() {
+		updateHamburgerVisibility();
+	}
+
+	private void updateHamburgerVisibility() {
+		if (hamburgerBtn != null && model != null) {
+			hamburgerBtn.setVisible(model.getImage() != null);
+		}
 	}
 }
