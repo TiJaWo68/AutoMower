@@ -7,7 +7,6 @@ import java.awt.event.MouseWheelListener;
 import java.awt.geom.Line2D;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
-import java.text.DecimalFormat;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -135,12 +134,21 @@ public class SetupGroundPanel extends SimulationPanel {
 				if (obstacle != null) {
 					Line2D line = obstacle.getLine2D(tp);
 					if (line != null) {
-						JFormattedTextField textfield = new JFormattedTextField(new DecimalFormat("ddd"));
+						JFormattedTextField textfield = new JFormattedTextField(java.text.NumberFormat.getIntegerInstance());
+						textfield.setValue(100); // Default suggestion
 						int result = JOptionPane.showConfirmDialog(SetupGroundPanel.this, textfield, "Enter length in cm for selected line",
 								JOptionPane.OK_CANCEL_OPTION);
 						if (result == JOptionPane.OK_OPTION) {
-							int length = Integer.parseInt(textfield.getText());
-							model.setCalibration(line, length);
+							try {
+								textfield.commitEdit();
+							} catch (java.text.ParseException ex) {
+								ex.printStackTrace();
+							}
+							Object val = textfield.getValue();
+							if (val instanceof Number) {
+								int length = ((Number) val).intValue();
+								model.setCalibration(line, length);
+							}
 						}
 					}
 				}
