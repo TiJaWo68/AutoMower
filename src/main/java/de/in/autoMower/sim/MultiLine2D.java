@@ -247,4 +247,26 @@ public class MultiLine2D implements Serializable {
 		}
 		return null;
 	}
+
+	public java.awt.Rectangle getBounds() {
+		if (points.isEmpty())
+			return new java.awt.Rectangle(0, 0, 0, 0);
+		double minX = Double.MAX_VALUE;
+		double minY = Double.MAX_VALUE;
+		double maxX = -Double.MAX_VALUE;
+		double maxY = -Double.MAX_VALUE;
+		synchronized (points) {
+			for (Point2D p : points) {
+				if (p.getX() < minX)
+					minX = p.getX();
+				if (p.getY() < minY)
+					minY = p.getY();
+				if (p.getX() > maxX)
+					maxX = p.getX();
+				if (p.getY() > maxY)
+					maxY = p.getY();
+			}
+		}
+		return new java.awt.Rectangle((int) minX, (int) minY, (int) (maxX - minX), (int) (maxY - minY));
+	}
 }
