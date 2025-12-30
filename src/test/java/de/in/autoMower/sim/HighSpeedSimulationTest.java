@@ -37,7 +37,7 @@ class HighSpeedSimulationTest {
 
 		TestAutoMowerModel mower = new TestAutoMowerModel();
 		mower.groundModel = groundModel;
-		mower.cmProPixel = groundModel.getCalibration();
+
 		mower.border = groundModel.getBorder();
 
 		if (data.mower != null) {

@@ -39,7 +39,7 @@ class NavigationErrorReproductionTest {
 
         TestAutoMowerModel mower = new TestAutoMowerModel();
         mower.groundModel = groundModel;
-        mower.cmProPixel = groundModel.getCalibration();
+
         mower.border = groundModel.getBorder();
 
         // Move mower to a known sharp corner from tbs10.json

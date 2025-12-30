@@ -29,7 +29,7 @@ class AutoMowerModelTest {
         mower.groundModel = gm;
         mower.border = border;
         mower.line = new MultiLine2D(Color.RED);
-        mower.cmProPixel = 1.0;
+
         mower.random = new Random(42); // Seeded for reproducibility
 
         // Setup collision state: hitting the right wall (x=100) at y=50
@@ -76,7 +76,6 @@ class AutoMowerModelTest {
         mower.currentLine = new Line2D.Double(new Point2D.Double(100, 50), new Point2D.Double(150, 50));
         mower.stopped = false;
         mower.speedInCmPerSec = 0; // prevent movement
-        mower.cmProPixel = 1.0;
 
         // We can't easily call runMower() because it has a loop.
         // But we can check the logic inside the loop if we extract it or just rely on

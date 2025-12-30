@@ -39,7 +39,7 @@ class BoundarySafetyTest {
 
         AutoMowerModel mower = new AutoMowerModel();
         mower.groundModel = groundModel;
-        mower.cmProPixel = groundModel.getCalibration();
+
         mower.border = groundModel.getBorder();
 
         Point2D startPos = groundModel.getChargingStation();
