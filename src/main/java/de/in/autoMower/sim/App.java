@@ -29,13 +29,12 @@ import com.formdev.flatlaf.FlatDarculaLaf;
 public class App extends JFrame {
 
 	private static App app;
-	private GroundModel ground;
+	private GroundModel model;
 	private SimulationPanel panel;
 	private AutoMowerModel mower;
 	private Simulation simulation;
 	private JSlider speedSlider;
-	// private LogPanel logPanel;
-	// private javax.swing.JSplitPane splitPane;
+	// private LogPanel logPanel; private javax.swing.JSplitPane splitPane;
 
 	/**
 	 * @param args
@@ -59,15 +58,12 @@ public class App extends JFrame {
 
 	public App() {
 		super("AutoMowerSimulation");
+		if (app == null)
+			app = this;
 
-		ground = new GroundModel();
-		panel = new SetupGroundPanel(ground);
+		model = new GroundModel();
+		panel = new SetupGroundPanel(model);
 		mower = new AutoMowerModel();
-
-		// logPanel = new LogPanel();
-		// splitPane = new javax.swing.JSplitPane(javax.swing.JSplitPane.VERTICAL_SPLIT,
-		// panel, logPanel);
-		// splitPane.setResizeWeight(0.8); // 80% space for simulation
 
 		getContentPane().add(panel);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -83,14 +79,8 @@ public class App extends JFrame {
 		setLocationRelativeTo(null);
 	}
 
-	// public void log(String message) {
-	// if (logPanel != null) {
-	// logPanel.log(message);
-	// }
-	// }
-
 	public GroundModel getGroundModel() {
-		return ground;
+		return model;
 	}
 
 	public void setMower(AutoMowerModel mower) {
@@ -106,7 +96,7 @@ public class App extends JFrame {
 	}
 
 	public void setModel(GroundModel model) {
-		this.ground = model;
+		this.model = model;
 		panel.setModel(model);
 	}
 
@@ -119,7 +109,7 @@ public class App extends JFrame {
 	}
 
 	public Simulation createSimulation(MultiLine2D line) {
-		simulation = new Simulation(ground, mower, line);
+		simulation = new Simulation(model, mower, line);
 		return simulation;
 	}
 
@@ -146,7 +136,6 @@ public class App extends JFrame {
 
 		ProjectData data = mapper.readValue(selectedFile, ProjectData.class);
 
-		GroundModel model = new GroundModel();
 		model.calibration = data.calibration;
 		model.border = data.border.toMultiLine();
 		model.obstacles = data.obstacles.stream().map(ProjectData.MultiLineDTO::toMultiLine)
@@ -174,6 +163,7 @@ public class App extends JFrame {
 				mower.setCurrentPosition(data.mower.currentPosition.toPoint());
 			}
 		}
+		// Sync calibration - Removed: mower reads directly from model
 
 		app.setModel(model);
 		app.setMower(mower);
