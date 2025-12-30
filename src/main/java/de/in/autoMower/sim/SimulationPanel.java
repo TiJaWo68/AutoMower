@@ -17,8 +17,6 @@ package de.in.autoMower.sim;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 
@@ -42,61 +40,52 @@ public class SimulationPanel extends JPanel {
 		setModel(model);
 		setOpaque(true);
 
-		addMouseWheelListener(new MouseWheelListener() {
+		addMouseWheelListener(e -> {
+			if (e.isControlDown()) {
+				// 1. Calculate current transform parameters
+				double width = 1d * getWidth();
+				double height = 1d * getHeight();
+				double iWidth = (1d * model.getImage().getWidth());
+				double iHeight = (1d * model.getImage().getHeight());
+				double baseZoom = 1d / Math.max(iWidth / width, iHeight / height);
 
-			@Override
-			public void mouseWheelMoved(MouseWheelEvent e) {
-				if (e.isControlDown()) {
-					// 1. Calculate current transform parameters
-					double width = 1d * getWidth();
-					double height = 1d * getHeight();
-					double iWidth = (1d * model.getImage().getWidth());
-					double iHeight = (1d * model.getImage().getHeight());
-					double baseZoom = 1d / Math.max(iWidth / width, iHeight / height);
+				// Base centering offset
+				double baseTx = (width - baseZoom * iWidth) / 2d;
+				double baseTy = (height - baseZoom * iHeight) / 2d;
 
-					// Base centering offset
-					double baseTx = (width - baseZoom * iWidth) / 2d;
-					double baseTy = (height - baseZoom * iHeight) / 2d;
+				double totalScale = baseZoom * userScale;
+				double totalTx = baseTx + userTranslateX;
+				double totalTy = baseTy + userTranslateY;
 
-					double totalScale = baseZoom * userScale;
-					double totalTx = baseTx + userTranslateX;
-					double totalTy = baseTy + userTranslateY;
+				// 2. Calculate world point under mouse
+				double mx = e.getX();
+				double my = e.getY();
+				double wx = (mx - totalTx) / totalScale;
+				double wy = (my - totalTy) / totalScale;
 
-					// 2. Calculate world point under mouse
-					double mx = e.getX();
-					double my = e.getY();
-					double wx = (mx - totalTx) / totalScale;
-					double wy = (my - totalTy) / totalScale;
-
-					// 3. Update Scale
-					double delta = e.getPreciseWheelRotation();
-					if (delta < 0) {
-						userScale *= 1.1;
-					} else {
-						userScale /= 1.1;
-					}
-					if (userScale < 0.1)
-						userScale = 0.1;
-					if (userScale > 50.0)
-						userScale = 50.0;
-
-					// 4. Calculate new translation to keep (wx, wy) at (mx, my)
-					// mx = wx * newTotalScale + newTotalTx
-					// newTotalTx = mx - wx * newTotalScale
-					double newTotalScale = baseZoom * userScale;
-					double newTotalTx = mx - wx * newTotalScale;
-					double newTotalTy = my - wy * newTotalScale;
-
-					// 5. Update user translation
-					// newTotalTx = baseTx + newUserTranslateX
-					userTranslateX = newTotalTx - baseTx;
-					userTranslateY = newTotalTy - baseTy;
-
-					repaint();
+				// 3. Update Scale
+				double delta = e.getPreciseWheelRotation();
+				if (delta < 0) {
+					userScale *= 1.1;
 				} else {
-					repaint();
+					userScale /= 1.1;
 				}
+				if (userScale < 0.1)
+					userScale = 0.1;
+				if (userScale > 50.0)
+					userScale = 50.0;
+
+				// 4. Calculate new translation to keep (wx, wy) at (mx, my) mx = wx * newTotalScale + newTotalTx newTotalTx = mx - wx *
+				// newTotalScale
+				double newTotalScale = baseZoom * userScale;
+				double newTotalTx = mx - wx * newTotalScale;
+				double newTotalTy = my - wy * newTotalScale;
+
+				// 5. Update user translation newTotalTx = baseTx + newUserTranslateX
+				userTranslateX = newTotalTx - baseTx;
+				userTranslateY = newTotalTy - baseTy;
 			}
+			repaint();
 		});
 
 		addMouseListener(new java.awt.event.MouseAdapter() {
@@ -112,8 +101,6 @@ public class SimulationPanel extends JPanel {
 		});
 	}
 
-	private int paintCounter = 0;
-
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
@@ -123,65 +110,11 @@ public class SimulationPanel extends JPanel {
 				g2d.drawImage(model.getImage(), transform, null);
 
 				AutoMowerModel mower = App.getApp().getMower();
-				// Use the actual total scale for consistency with rendering?
-				// mower.cmProPixel is physical calibration.
-				// The view scale is transform.getScaleX().
-				// But drawing logic below might assume model space coordinates if using
-				// transform.
-
-				// Wait, the drawing logic below:
-				// line.draw(g2d, transform) -> transforms points.
-				// stroke width needs to be in model pixels or screen pixels?
-				// If we set stroke width, it's affected by transform if we draw in model space?
-				// No, setStroke is affected by transform ONLY if we transform the Graphics
-				// context.
-				// But here we are passing 'transform' to 'line.draw(g2d, transform)'.
-				// So 'line.draw' probably manually transforms points?
-				// Let's assume existing logic works if 'transform' maps Model -> Screen.
-
-				double cmPropix = (mower.cmProPixel != null) ? mower.cmProPixel : model.getCalibration();
+				double cmPropix = model.getCalibration();
 				if (cmPropix <= 0)
 					cmPropix = 1.0;
 
-				// mowingWidth is in cm.
-				// mowingWidthPixels = cm / (cm/pixel) = pixels (model space).
-				// If we draw in screen space (transforming points), the line width should be
-				// scaled?
-				// Original code:
-				// double mowingWidthPixels = mower.getMowingWidthInCm() / cmPropix;
-				// g2d.setStroke(..., mowingWidthPixels, ...)
-
-				// Check line.draw implementation... assuming it uses the transform to verify.
-				// Assuming standard implementation:
-				// If we draw transformed points, we are drawing in Screen Space.
-				// So stroke width 'mowingWidthPixels' (Model Space) needs to be scaled by
-				// 'zoom'?
-				// Original code didn't scale stroke?
-				// "double mowingWidthPixels = mower.getMowingWidthInCm() / cmPropix;"
-				// This is width in Image Pixels.
-				// If we draw on Screen, and Image is zoomed 2x, the mower path should be 2x
-				// wider?
-				// If 'line.draw' transforms points to Screen Space, then we are drawing in
-				// Screen Space.
-				// So a fixed stroke width of 'mowingWidthPixels' would look THIN when zoomed
-				// in.
-				// We should probably scale the stroke width by 'transform.getScaleX()'.
-
-				// However, if 'line.draw' applies the transform to the Graphics object state?
-				// "line.draw(g2d, transform)"
-
-				// Let's stick to modifying 'createAffineTransform' and 'userTranslate' for now
-				// and assume the existing drawing logic works with the returned transform.
-
 				double mowingWidthPixels = mower.getMowingWidthInCm() / cmPropix;
-				// Adjust stroke width by zoom so it scales with image?
-				// Original code: did not. It used 'mowingWidthPixels' which is constant.
-				// If I zoom in, the stroke stays constant width on screen -> looks thinner
-				// relative to image.
-				// If user wants zoom, they probably want to see details. Scaling stroke is
-				// usually desired.
-				// Let's multiply by transform.getScaleX() to keep physical size correct on
-				// screen.
 				mowingWidthPixels *= transform.getScaleX();
 
 				java.awt.Stroke oldStroke = g2d.getStroke();
@@ -213,16 +146,10 @@ public class SimulationPanel extends JPanel {
 					g.setFont(g.getFont().deriveFont(java.awt.Font.BOLD, 24f));
 					g.drawString("CHARGING...", getWidth() / 2 - 50, getHeight() / 2);
 				}
-
-				paintCounter++;
-				if (paintCounter % 100 == 0) {
-					// System.out.println("Repainted 100 frames. Line points: " + (line != null ?
-					// line.getNumberOfPoints() : "null"));
-				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			System.err.println("CRITICAL IN PAINT: " + e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
@@ -269,29 +196,48 @@ public class SimulationPanel extends JPanel {
 		int seconds = (int) (mower.simulatedRuntimeSeconds % 60);
 		String runtimeStr = String.format("Runtime: %02d:%02d:%02d", hours, minutes, seconds);
 		g.drawString(runtimeStr, x, y + height + 30);
+
+		// Draw coverage
+		String coverageStr = String.format("Coverage: %.1f%%", mower.getCoveragePercentage() * 100.0);
+		g.drawString(coverageStr, x, y + height + 45);
+
+		// Draw error count
+		int errs = mower.getNavigationErrorCount();
+		if (errs > 0) {
+			g.setColor(java.awt.Color.RED);
+		} else {
+			g.setColor(java.awt.Color.WHITE);
+		}
+		g.drawString("Nav Errors: " + errs, x, y + height + 75);
+
+		// Draw collisions
+		g.setColor(java.awt.Color.WHITE);
+		g.drawString("Collisions: " + mower.getCollisionCount(), x, y + height + 60);
 	}
 
 	private void drawScaleBar(Graphics g) {
 		AutoMowerModel mower = App.getApp().getMower();
-		if (mower == null || mower.cmProPixel == null)
+		if ((mower == null) || (model.getCalibration() <= 0))
 			return;
 
 		// Fix for zoom: scale bar should reflect zoom level
 		AffineTransform t = createAffineTransform();
 		double currentZoom = t.getScaleX();
 
-		// 1 meter = 100 cm
-		// pixelsPerMeter = (100 cm / cmProPixel) * zoom
-		double pixelsPerMeter = (100.0 / mower.cmProPixel) * currentZoom;
+		// 1 meter = 100 cm pixelsPerMeter = (100 cm / cmProPixel) * zoom
+		double pixelsPerMeter = (100.0 / model.getCalibration()) * currentZoom;
 
-		int barX = getWidth() - (int) pixelsPerMeter - 20;
+		int barLength = (int) pixelsPerMeter;
+		if (barLength < 10)
+			return; // Too small to convert useful info
+
+		int barX = getWidth() - barLength - 20;
 		int barY = getHeight() - 40;
 		int barHeight = 5;
 
 		g.setColor(java.awt.Color.WHITE);
-		g.fillRect(barX, barY, (int) pixelsPerMeter, barHeight);
+		g.fillRect(barX, barY, barLength, barHeight);
 		g.drawLine(barX, barY - 3, barX, barY + barHeight + 3);
-		g.drawLine(barX + (int) pixelsPerMeter, barY - 3, barX + (int) pixelsPerMeter, barY + barHeight + 3);
 
 		g.drawString("1m", barX + (int) pixelsPerMeter / 2 - 10, barY - 5);
 	}
