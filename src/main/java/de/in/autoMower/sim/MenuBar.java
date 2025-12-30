@@ -55,7 +55,8 @@ public class MenuBar {
 			}
 		}
 	};
-	static MyAction changeImageAct = new MyAction("Change Image", null, "Change picture in the project", null, "change") {
+	static MyAction changeImageAct = new MyAction("Change Image", null, "Change picture in the project", null,
+			"change") {
 
 		JFileChooser fc = new JFileChooser(new File("."));
 
@@ -77,7 +78,8 @@ public class MenuBar {
 
 	};
 
-	static MyAction saveProjectAct = new MyAction("Save Project", null, "Saves the project in a json file", null, "save") {
+	static MyAction saveProjectAct = new MyAction("Save Project", null, "Saves the project in a json file", null,
+			"save") {
 		JFileChooser fc = new JFileChooser(new File("."));
 
 		{
@@ -101,7 +103,8 @@ public class MenuBar {
 					ProjectData data = new ProjectData();
 					data.calibration = groundModel.getCalibration();
 					data.border = new ProjectData.MultiLineDTO(groundModel.getBorder());
-					data.obstacles = groundModel.obstacles.stream().map(ProjectData.MultiLineDTO::new).collect(Collectors.toList());
+					data.obstacles = groundModel.obstacles.stream().map(ProjectData.MultiLineDTO::new)
+							.collect(Collectors.toList());
 					data.mower = new ProjectData.MowerDTO(autoMowerModel);
 					if (groundModel.getChargingStation() != null) {
 						data.chargingStation = new ProjectData.PointDTO(groundModel.getChargingStation());
@@ -135,7 +138,8 @@ public class MenuBar {
 
 	};
 
-	static MyAction mowerDataAct = new MyAction("Data", null, "You can enter the data for the mower here", null, "data") {
+	static MyAction mowerDataAct = new MyAction("Data", null, "You can enter the data for the mower here", null,
+			"data") {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
@@ -230,24 +234,58 @@ public class MenuBar {
 				double width = mower.getMowingWidthInCm();
 
 				if (speed <= 0 || width <= 0) {
-					JOptionPane.showMessageDialog(app, "Please set valid mower speed and width in Mower -> Data.", "Estimation Error",
+					JOptionPane.showMessageDialog(app, "Please set valid mower speed and width in Mower -> Data.",
+							"Estimation Error",
 							JOptionPane.ERROR_MESSAGE);
 					return;
 				}
 
-				double timeSeconds = areaCm2 / (speed * width);
+				double tMinSeconds = areaCm2 / (speed * width);
 
-				int hours = (int) (timeSeconds / 3600);
-				int minutes = (int) ((timeSeconds % 3600) / 60);
-				int seconds = (int) (timeSeconds % 60);
+				// Probabilistic model for random coverage:
+				// T(coverage) = -ln(1 - coverage) * (Area / R)
+				// T_95% = -ln(0.05) * t_min ~= 3.0 * t_min
+				// T_99% = -ln(0.01) * t_min ~= 4.6 * t_min
 
-				String timeStr = String.format("%dh %dm %ds", hours, minutes, seconds);
-				if (hours == 0) {
-					timeStr = String.format("%dm %ds", minutes, seconds);
-				}
+				double t95Seconds = tMinSeconds * 3.0;
+				double t99Seconds = tMinSeconds * 4.6;
 
-				String message = String.format("Net Mowing Area: %.2f m²\nEstimated Mowing Time: %s", areaM2, timeStr);
+				String tMinStr = formatDuration(tMinSeconds);
+				String t95Str = formatDuration(t95Seconds);
+				String t99Str = formatDuration(t99Seconds);
+
+				String message = String.format("""
+						Net Mowing Area: %.2f m²
+
+						Theoretical Minimum (100%% efficiency): %s
+
+						Random Walk Estimation:
+						~ 95%% Coverage: %s
+						~ 99%% Coverage: %s
+						""", areaM2, tMinStr, t95Str, t99Str);
+
+				SimulationPanel oldPanel = app.getPanel();
+				app.setPanel(new AreaVisualizationPanel(ground));
+
 				JOptionPane.showMessageDialog(app, message, "Mowing Estimation", JOptionPane.INFORMATION_MESSAGE);
+
+				// Restore
+				if (oldPanel != null) {
+					app.setPanel(oldPanel);
+				} else {
+					app.setPanel(new SetupGroundPanel(ground));
+				}
+			}
+
+			private String formatDuration(double totalSeconds) {
+				int hours = (int) (totalSeconds / 3600);
+				int minutes = (int) ((totalSeconds % 3600) / 60);
+				int seconds = (int) (totalSeconds % 60);
+				if (hours > 0) {
+					return String.format("%dh %dm %ds", hours, minutes, seconds);
+				} else {
+					return String.format("%dm %ds", minutes, seconds);
+				}
 			}
 		};
 
