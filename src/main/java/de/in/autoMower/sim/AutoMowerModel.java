@@ -44,7 +44,7 @@ public class AutoMowerModel implements Serializable {
 	public boolean isCharging = false;
 	public boolean isReturningToDock = false;
 	public boolean stopped = false;
-	public Double cmProPixel = 1.0;
+	// public Double cmProPixel = 1.0; // REMOVED: Use groundModel.getCalibration()
 	public double simulatedRuntimeSeconds = 0;
 
 	Point2D currentPosition = null;
@@ -122,7 +122,6 @@ public class AutoMowerModel implements Serializable {
 		this.line = visualTrace;
 		this.groundModel = gm;
 		this.border = gm.getBorder();
-		this.cmProPixel = gm.getCalibration();
 
 		Point2D station = gm.getChargingStation();
 		if (station != null) {
@@ -147,6 +146,8 @@ public class AutoMowerModel implements Serializable {
 		this.currentBatteryWh = this.batteryCapacityWh;
 		this.currentState = startState;
 		this.stopped = false;
+
+		initCoverage();
 
 		if (currentState == State.EDGE_CUTTING) {
 			this.currentBorderIndex = getNearestBorderIndex(currentPosition);
@@ -205,7 +206,7 @@ public class AutoMowerModel implements Serializable {
 					}
 				} else {
 					double moveDist = speedInCmPerSec * dtSim;
-					double pixelDist = moveDist / cmProPixel;
+					double pixelDist = moveDist / groundModel.getCalibration();
 					currentBatteryWh -= moveDist * energyConsumptionWhPerCm;
 
 					if (currentState == State.MOWING && currentBatteryWh < batteryCapacityWh * 0.10) {
@@ -254,6 +255,7 @@ public class AutoMowerModel implements Serializable {
 								pixelDist);
 						currentPosition.setLocation(newPos);
 						currentLine.setLine(currentPosition, currentLine.getP2());
+						updateCoverage(currentPosition);
 					}
 				}
 
@@ -386,19 +388,10 @@ public class AutoMowerModel implements Serializable {
 				dirEnd = new Point2D.Double(currentPosition.getX() + Math.cos(ang),
 						currentPosition.getY() + Math.sin(ang));
 			} else if (touching.size() == 1) {
+				collisionCount++; // Increment collision count when bouncing off wall
 				Line2D wall = touching.get(0);
-				Point2D p1 = currentLine.getP1();
-				double angIn = GeomUtil.getAngleRad(p1, currentPosition);
-				double angWall = GeomUtil.getAngleRad(wall.getP1(), wall.getP2());
-				double angOut = 2 * angWall - angIn;
-				angOut += (random.nextDouble() - 0.5) * 0.1;
-				dirEnd = new Point2D.Double(currentPosition.getX() + Math.cos(angOut) * 100,
-						currentPosition.getY() + Math.sin(angOut) * 100);
-				if (!groundModel.isInside(GeomUtil.getColinearPointWithLength(currentPosition, dirEnd, 1.0), NAV_EPS)) {
-					angOut += Math.PI;
-					dirEnd = new Point2D.Double(currentPosition.getX() + Math.cos(angOut) * 100,
-							currentPosition.getY() + Math.sin(angOut) * 100);
-				}
+				dirEnd = calculateBounceDirection(wall, currentPosition, currentLine.getP1());
+
 			} else {
 				// Vertex/Corner - Robust Systematic Search
 				boolean found = false;
@@ -438,6 +431,7 @@ public class AutoMowerModel implements Serializable {
 									currentPosition.getY() + Math.sin(perpAng));
 						}
 						dirEnd = test;
+						collisionCount++; // Increment collision count for vertex/corner recovery
 					}
 				}
 			}
@@ -473,6 +467,7 @@ public class AutoMowerModel implements Serializable {
 						Point2D mid = new Point2D.Double((currentPosition.getX() + hit.getX()) / 2.0,
 								(currentPosition.getY() + hit.getY()) / 2.0);
 						if (groundModel.isInside(mid, NAV_EPS)) {
+							collisionCount++; // Increment collision count upon finding a valid wall collision
 							currentLine = new Line2D.Double(currentPosition, hit);
 							segmentStart = new Point2D.Double(currentPosition.getX(), currentPosition.getY());
 							return;
@@ -486,9 +481,25 @@ public class AutoMowerModel implements Serializable {
 						currentPosition.getY() + Math.sin(ang));
 			}
 
-			showErrorMessage("Navigation Error: Stuck at " + currentPosition);
-			currentLine = new Line2D.Double(currentPosition, currentPosition);
-			stopped = true;
+			navigationErrorCount++;
+			System.err.println("Navigation Error: Stuck at " + currentPosition);
+
+			// Recovery: Teleport to dock
+			Point2D dock = groundModel.getChargingStation();
+			if (dock != null) {
+				currentPosition.setLocation(dock);
+				currentState = State.CHARGING;
+				isCharging = true;
+				isReturningToDock = false;
+				chargingStateTime = 0;
+				currentLine = new Line2D.Double(currentPosition, currentPosition);
+				showInfoMessage("Recovered from stuck: Teleported to dock.");
+				return;
+			} else {
+				showErrorMessage("Navigation Error: Stuck at " + currentPosition + " (No Dock found)");
+				currentLine = new Line2D.Double(currentPosition, currentPosition);
+				stopped = true;
+			}
 		}
 	}
 
@@ -549,6 +560,7 @@ public class AutoMowerModel implements Serializable {
 	}
 
 	private void handleCollision(Line2D wall) {
+		collisionCount++;
 		Point2D hit = GeomUtil.getIntersectPoint(wall, currentLine);
 		if (hit == null)
 			hit = wall.getP1();
@@ -581,6 +593,138 @@ public class AutoMowerModel implements Serializable {
 	public void resume() {
 		stopped = false;
 		new Thread(this::runMower).start();
+	}
+
+	public Point2D calculateBounceDirection(Line2D wall, Point2D hitPoint, Point2D prevPoint) {
+		// 1. Calculate Wall Vector
+		double wx = wall.getX2() - wall.getX1();
+		double wy = wall.getY2() - wall.getY1();
+		double len = Math.sqrt(wx * wx + wy * wy);
+		if (len < 0.0001)
+			return new Point2D.Double(hitPoint.getX(), hitPoint.getY()); // Degenerate wall
+		wx /= len;
+		wy /= len;
+
+		// 2. Calculate Normal (arbitrary one side)
+		double nx = -wy;
+		double ny = wx;
+
+		// 3. Ensure Normal points "Inward" (towards where we came from)
+		// Vector from Hit to Prev
+		double ix = prevPoint.getX() - hitPoint.getX();
+		double iy = prevPoint.getY() - hitPoint.getY();
+
+		if (nx * ix + ny * iy < 0) {
+			nx = -nx;
+			ny = -ny;
+		}
+
+		// 4. Randomize Angle (0 to 90 degrees)
+		// 0 deg = normal, 90 deg = parallel to wall
+		double angleDeg = random.nextDouble() * 90.0;
+		double angleRad = Math.toRadians(angleDeg);
+
+		// 5. Randomize Direction (Left or Right of Normal)
+		if (random.nextBoolean()) {
+			angleRad = -angleRad;
+		}
+
+		// 6. Rotate Normal by Angle
+		double cosA = Math.cos(angleRad);
+		double sinA = Math.sin(angleRad);
+
+		double rx = nx * cosA - ny * sinA;
+		double ry = nx * sinA + ny * cosA;
+
+		// 7. Return Target Point (extended out)
+		return new Point2D.Double(hitPoint.getX() + rx * 100.0, hitPoint.getY() + ry * 100.0);
+	}
+
+	private int navigationErrorCount = 0;
+
+	public int getNavigationErrorCount() {
+		return navigationErrorCount;
+	}
+
+	private int collisionCount = 0;
+
+	public int getCollisionCount() {
+		return collisionCount;
+	}
+
+	// --- Coverage Tracking ---
+	private byte[][] coverageGrid; // 0=Outside, 1=Unmowed, 2=Mowed
+	private int gridMinX, gridMinY;
+	private int gridWidth, gridHeight;
+	private long totalMowablePixels = 0;
+	private long mowedPixels = 0;
+	private boolean coverageInitialized = false;
+
+	public void initCoverage() {
+		if (groundModel == null || groundModel.getBorder() == null)
+			return;
+
+		java.awt.Rectangle bounds = groundModel.getBorder().getBounds();
+		gridMinX = bounds.x;
+		gridMinY = bounds.y;
+		gridWidth = bounds.width + 1;
+		gridHeight = bounds.height + 1;
+
+		coverageGrid = new byte[gridWidth][gridHeight];
+		totalMowablePixels = 0;
+		mowedPixels = 0;
+
+		// Heavy operation: checking every pixel
+		for (int x = 0; x < gridWidth; x++) {
+			for (int y = 0; y < gridHeight; y++) {
+				Point2D p = new Point2D.Double(gridMinX + x, gridMinY + y);
+				if (groundModel.isInside(p)) {
+					coverageGrid[x][y] = 1; // Unmowed
+					totalMowablePixels++;
+				} else {
+					coverageGrid[x][y] = 0; // Outside
+				}
+			}
+		}
+		coverageInitialized = true;
+		System.out.println("Coverage Grid Initialized: " + totalMowablePixels + " mowable pixels.");
+	}
+
+	private void updateCoverage(Point2D pos) {
+		if (!coverageInitialized || coverageGrid == null)
+			return;
+
+		double pixelRadius = (mowingWidthInCm / 2) / groundModel.getCalibration();
+		int r = (int) Math.ceil(pixelRadius);
+
+		int cx = (int) pos.getX() - gridMinX;
+		int cy = (int) pos.getY() - gridMinY;
+
+		int minX = Math.max(0, cx - r);
+		int maxX = Math.min(gridWidth - 1, cx + r);
+		int minY = Math.max(0, cy - r);
+		int maxY = Math.min(gridHeight - 1, cy + r);
+
+		double rSq = pixelRadius * pixelRadius;
+
+		for (int x = minX; x <= maxX; x++) {
+			for (int y = minY; y <= maxY; y++) {
+				if (coverageGrid[x][y] == 1) { // If Unmowed
+					double dx = x - cx;
+					double dy = y - cy;
+					if (dx * dx + dy * dy <= rSq) {
+						coverageGrid[x][y] = 2; // Mowed
+						mowedPixels++;
+					}
+				}
+			}
+		}
+	}
+
+	public double getCoveragePercentage() {
+		if (!coverageInitialized || totalMowablePixels == 0)
+			return 0.0;
+		return (double) mowedPixels / totalMowablePixels;
 	}
 
 	public void cancel() {
