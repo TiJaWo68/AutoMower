@@ -117,13 +117,12 @@ public class GroundModel implements Serializable {
 		highLightedPoint = border.getPoint(p);
 		if (testForHighLightedChanged(bLine, bPoint))
 			return;
-		else
-			for (MultiLine2D line : obstacles) {
-				highLightedLine = line.getLine2D(p);
-				highLightedPoint = line.getPoint(p);
-				if (testForHighLightedChanged(bLine, bPoint))
-					return;
-			}
+		for (MultiLine2D line : obstacles) {
+			highLightedLine = line.getLine2D(p);
+			highLightedPoint = line.getPoint(p);
+			if (testForHighLightedChanged(bLine, bPoint))
+				return;
+		}
 		if (highLightedLine == null && bLine != null || highLightedPoint == null && bPoint != null)
 			listener.stateChanged(new ChangeEvent(this));
 	}
@@ -227,16 +226,12 @@ public class GroundModel implements Serializable {
 	}
 
 	public boolean isInside(Point2D p, double eps) {
-		if (border != null && !border.contains(p)) {
-			if (border.ptSegDist(p) > eps) {
-				return false;
-			}
+		if ((border != null && !border.contains(p)) && (border.ptSegDist(p) > eps)) {
+			return false;
 		}
 		for (MultiLine2D obstacle : obstacles) {
-			if (obstacle.contains(p)) {
-				if (obstacle.ptSegDist(p) > eps) {
-					return false;
-				}
+			if (obstacle.contains(p) && (obstacle.ptSegDist(p) > eps)) {
+				return false;
 			}
 		}
 		return true;
@@ -286,8 +281,6 @@ public class GroundModel implements Serializable {
 		// Snap to nearest vertex
 		chargingStation.setLocation(pts.get(nearestIdx));
 
-		// Determine "left" direction from dock's perspective (to match AutoMowerModel)
-		int direction = 1;
 		Point2D v = border.getPoint(nearestIdx);
 		int nextIdx = (nearestIdx + 1) % border.getNumberOfPoints();
 		Point2D vNext = border.getPoint(nextIdx);
@@ -298,7 +291,7 @@ public class GroundModel implements Serializable {
 		double dy_v = vNext.getY() - v.getY();
 
 		double det = dx_f * dy_v - dy_f * dx_v;
-		direction = (det > 0) ? -1 : 1;
+		int direction = (det > 0) ? -1 : 1;
 
 		border.setNumberingStartAndDirection(nearestIdx, direction);
 		border.setShowIndices(true);
