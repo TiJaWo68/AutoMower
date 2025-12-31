@@ -2,15 +2,13 @@ package de.in.autoMower.sim;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Color;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
 
 import org.junit.jupiter.api.Test;
 
-import de.in.autoMower.sim.AutoMowerModel.State;
+import de.in.autoMower.sim.AbstractAutoMowerModel.State;
 
 class NavigationErrorRecoveryTest {
 
@@ -94,6 +92,7 @@ class NavigationErrorRecoveryTest {
 
         mower.groundModel = trapGm;
         mower.setCurrentPosition(new Point2D.Double(50, 50));
+        mower.currentState = State.MOWING;
 
         // Now call calculateNextSegment
         // It should try 200 times to find a direction, fail, then trigger error
@@ -106,7 +105,7 @@ class NavigationErrorRecoveryTest {
         assertEquals(State.CHARGING, mower.currentState, "Should be charging");
         assertEquals(10.0, mower.getCurrentPosition().getX(), 0.001);
         assertEquals(10.0, mower.getCurrentPosition().getY(), 0.001);
-        assertFalse(mower.stopped, "Should NOT be stopped");
+        assertFalse(mower.isStopped(), "Should NOT be stopped");
     }
 
     static class TestMower extends AutoMowerModel {
