@@ -31,7 +31,7 @@ public class App extends JFrame {
 	private static App app;
 	private GroundModel model;
 	private SimulationPanel panel;
-	private AutoMowerModel mower;
+	private AbstractAutoMowerModel mower;
 	private Simulation simulation;
 	private JSlider speedSlider;
 	// private LogPanel logPanel; private javax.swing.JSplitPane splitPane;
@@ -83,11 +83,11 @@ public class App extends JFrame {
 		return model;
 	}
 
-	public void setMower(AutoMowerModel mower) {
+	public void setMower(AbstractAutoMowerModel mower) {
 		this.mower = mower;
 	}
 
-	public AutoMowerModel getMower() {
+	public AbstractAutoMowerModel getMower() {
 		return mower;
 	}
 
@@ -145,13 +145,32 @@ public class App extends JFrame {
 			model.ensureChargingStationInside();
 		}
 
+		model.clearZonePoints();
+		if (data.zonePoints != null) {
+			for (ProjectData.ZonePointDTO p : data.zonePoints) {
+				model.addZonePoint(p.toZonePoint().getPoint(), p.percentage);
+			}
+		}
+
 		if (data.backgroundImageBase64 != null) {
 			byte[] imageBytes = Base64.getDecoder().decode(data.backgroundImageBase64);
 			BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageBytes));
 			model.setImage(image);
 		}
 
-		AutoMowerModel mower = new AutoMowerModel();
+		AbstractAutoMowerModel mower;
+		if (data.mower != null) {
+			if (data.mower.version == 2) {
+				mower = new AutoMowerModel();
+			} else if (data.mower.version == 3) {
+				mower = new AutoMowerModelV3();
+			} else {
+				mower = new AutoMowerModel();
+			}
+		} else {
+			mower = new AutoMowerModel();
+		}
+
 		if (data.mower != null) {
 			mower.setSpeedInCmPerSec(data.mower.speedInCmPerSec);
 			mower.setMowingWidthInCm(data.mower.mowingWidthInCm);
