@@ -4,13 +4,13 @@ public class Simulation implements Runnable {
 
 	GroundModel groundModel;
 
-	public Simulation(GroundModel groundModel, AutoMowerModel mower, MultiLine2D line) {
+	public Simulation(GroundModel groundModel, AbstractAutoMowerModel mower, MultiLine2D line) {
 		this.groundModel = groundModel;
 		this.mower = mower;
 		this.line = line;
 	}
 
-	AutoMowerModel mower;
+	AbstractAutoMowerModel mower;
 	MultiLine2D line;
 
 	public void run() {
