@@ -42,7 +42,6 @@ public class ChargingResumptionTest {
 
         // Manually force into CHARGING state to test resumption
         model.currentState = AutoMowerModel.State.CHARGING;
-        model.isCharging = true;
         model.currentBatteryWh = model.batteryCapacityWh * 0.95; // Near full to charge quickly
         model.currentPosition = new Point2D.Double(395, 313);
         model.currentLine = new Line2D.Double(model.currentPosition, model.currentPosition);
@@ -60,11 +59,11 @@ public class ChargingResumptionTest {
         long start = System.currentTimeMillis();
         boolean resumedMowing = false;
         while (System.currentTimeMillis() - start < 20000) {
-            if (model.currentState == AutoMowerModel.State.MOWING && !model.isCharging) {
+            if (model.currentState == AutoMowerModel.State.MOWING && !model.isCharging()) {
                 resumedMowing = true;
                 break;
             }
-            if (model.stopped) {
+            if (model.isStopped()) {
                 System.out.println("Mower STOPPED during charging/resumption.");
                 break;
             }
