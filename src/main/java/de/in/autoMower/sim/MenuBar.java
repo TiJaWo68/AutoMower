@@ -97,7 +97,7 @@ public class MenuBar {
 				}
 
 				GroundModel groundModel = app.getGroundModel();
-				AutoMowerModel autoMowerModel = app.getMower();
+				AbstractAutoMowerModel autoMowerModel = app.getMower();
 
 				try {
 					ProjectData data = new ProjectData();
@@ -108,6 +108,11 @@ public class MenuBar {
 					data.mower = new ProjectData.MowerDTO(autoMowerModel);
 					if (groundModel.getChargingStation() != null) {
 						data.chargingStation = new ProjectData.PointDTO(groundModel.getChargingStation());
+					}
+
+					if (groundModel.getZonePoints() != null) {
+						data.zonePoints = groundModel.getZonePoints().stream()
+								.map(ProjectData.ZonePointDTO::new).collect(Collectors.toList());
 					}
 
 					if (groundModel.getImage() != null) {
@@ -138,13 +143,14 @@ public class MenuBar {
 
 	};
 
-	static MyAction mowerDataAct = new MyAction("Data", null, "You can enter the data for the mower here", null,
+	static MyAction mowerDataAct = new MyAction("Einstellungen", null, "You can enter the data for the mower here",
+			null,
 			"data") {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			App app = App.getApp();
-			AutoMowerModel autoMowerModel = app.getMower();
+			AbstractAutoMowerModel autoMowerModel = app.getMower();
 			new SettingsDialog(autoMowerModel);
 		}
 
@@ -225,7 +231,7 @@ public class MenuBar {
 			public void actionPerformed(ActionEvent e) {
 				App app = App.getApp();
 				GroundModel ground = app.getGroundModel();
-				AutoMowerModel mower = app.getMower();
+				AbstractAutoMowerModel mower = app.getMower();
 
 				double areaCm2 = ground.getNetArea();
 				double areaM2 = areaCm2 / 10000.0;
