@@ -14,7 +14,7 @@ public class SettingsDialog {
 
 	protected JFormattedTextField jTfSpeed, jTfWidth, jTfBattery, jTfConsumption, jTfCharge;
 
-	public SettingsDialog(AutoMowerModel autoMowerModel) {
+	public SettingsDialog(AbstractAutoMowerModel autoMowerModel) {
 		JDialog dialog = new JDialog();
 		dialog.setTitle("Mower Specifications");
 		dialog.setLayout(new GridLayout(0, 2, 5, 5));
@@ -42,6 +42,19 @@ public class SettingsDialog {
 		jTfCharge = new JFormattedTextField(numberformat);
 		jTfCharge.setText(numberformat.format(autoMowerModel.chargeRateWhPerSec));
 
+		JLabel jLTextVersion = new JLabel("   Model Version");
+		AbstractAutoMowerModel[] versions = { new AutoMowerModel(), new AutoMowerModelV2(), new AutoMowerModelV3(),
+				new AutoMowerModelV4() };
+		javax.swing.JComboBox<AbstractAutoMowerModel> jCbVersion = new javax.swing.JComboBox<>(versions);
+
+		// Set current selection
+		for (int i = 0; i < versions.length; i++) {
+			if (versions[i].getModelVersion() == autoMowerModel.getModelVersion()) {
+				jCbVersion.setSelectedIndex(i);
+				break;
+			}
+		}
+
 		JButton jBCancel = new JButton("Cancel");
 		jBCancel.addActionListener(e -> {
 			dialog.dispose();
@@ -50,16 +63,47 @@ public class SettingsDialog {
 		JButton jbSave = new JButton("Save");
 		jbSave.addActionListener(e -> {
 			try {
-				autoMowerModel.setMowingWidthInCm(Double.parseDouble(jTfWidth.getText().replace(",", "")));
-				autoMowerModel.setSpeedInCmPerSec(Double.parseDouble(jTfSpeed.getText().replace(",", "")));
-				autoMowerModel.batteryCapacityWh = Double.parseDouble(jTfBattery.getText().replace(",", ""));
-				autoMowerModel.energyConsumptionWhPerCm = Double.parseDouble(jTfConsumption.getText().replace(",", ""));
-				autoMowerModel.chargeRateWhPerSec = Double.parseDouble(jTfCharge.getText().replace(",", ""));
+				double width = Double.parseDouble(jTfWidth.getText().replace(",", ""));
+				double speed = Double.parseDouble(jTfSpeed.getText().replace(",", ""));
+				double battery = Double.parseDouble(jTfBattery.getText().replace(",", ""));
+				double consumption = Double.parseDouble(jTfConsumption.getText().replace(",", ""));
+				double charge = Double.parseDouble(jTfCharge.getText().replace(",", ""));
 
-				// Reset current battery if capacity changes significantly?
-				// For now just cap it.
-				if (autoMowerModel.currentBatteryWh > autoMowerModel.batteryCapacityWh) {
-					autoMowerModel.currentBatteryWh = autoMowerModel.batteryCapacityWh;
+				AbstractAutoMowerModel selectedModelTemplate = (AbstractAutoMowerModel) jCbVersion.getSelectedItem();
+				AbstractAutoMowerModel targetMower = autoMowerModel;
+
+				if (selectedModelTemplate.getModelVersion() != autoMowerModel.getModelVersion()) {
+					targetMower = selectedModelTemplate.createNewInstance();
+
+					// Copy state
+					targetMower.setCurrentPosition(autoMowerModel.getCurrentPosition());
+					// Note: If simulation is running, this might differ from live state if not
+					// careful.
+					// But usually settings are changed when stopped or it will just apply to next
+					// run.
+
+					App.getApp().setMower(targetMower);
+					// If we have a simulation panel, we might need to tell it about the new mower?
+					// The simulation panel accesses mower via App.getMower() usually or passed in
+					// constructor.
+					// Existing SimulationPanel holds a reference to mower? No, check
+					// App.createSimulation
+					// Simulation holds reference. App holds simulation.
+					// If simulation running, we might need to stop it or update it.
+					if (App.getApp().getSimulation() != null) {
+						App.getApp().getSimulation().cancel();
+						App.getApp().resetSimulation();
+					}
+				}
+
+				targetMower.setMowingWidthInCm(width);
+				targetMower.setSpeedInCmPerSec(speed);
+				targetMower.batteryCapacityWh = battery;
+				targetMower.energyConsumptionWhPerCm = consumption;
+				targetMower.chargeRateWhPerSec = charge;
+
+				if (targetMower.currentBatteryWh > targetMower.batteryCapacityWh) {
+					targetMower.currentBatteryWh = targetMower.batteryCapacityWh;
 				}
 
 				dialog.dispose();
@@ -78,11 +122,13 @@ public class SettingsDialog {
 		dialog.add(jTfConsumption);
 		dialog.add(jLTextCharge);
 		dialog.add(jTfCharge);
+		dialog.add(jLTextVersion);
+		dialog.add(jCbVersion);
 		dialog.add(jBCancel);
 		dialog.add(jbSave);
 
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		dialog.setSize(350, 250);
+		dialog.setSize(350, 300); // Increased height
 		dialog.setLocationRelativeTo(App.getApp());
 		dialog.setResizable(false);
 		dialog.setModal(true);
