@@ -50,7 +50,7 @@ class TraceUpdateTest {
             startPos = groundModel.getBorder().getPoint(0);
 
         mower.setCurrentPosition(startPos);
-        mower.stopped = false;
+        mower.currentState = AutoMowerModel.State.MOWING;
 
         // Setup Line (Trace)
         MultiLine2D traceLine = new MultiLine2D(java.awt.Color.RED);
@@ -113,10 +113,6 @@ class TraceUpdateTest {
 
         public String getLastErrorMessage() {
             return lastErrorMessage;
-        }
-
-        public boolean isStopped() {
-            return stopped;
         }
     }
 }
