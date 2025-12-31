@@ -89,8 +89,8 @@ class TbsSimulationTest {
         // Initialize currentLine (dummy)
         mower.currentLine = new java.awt.geom.Line2D.Double(startPos, startPos);
 
-        // IMPORTANT: Set stopped to false, as we bypass runMower
-        mower.stopped = false;
+        // IMPORTANT: Set state to MOWING, as we bypass runMower
+        mower.currentState = AutoMowerModel.State.MOWING;
 
         // Run 100 collision steps FAST (no sleep)
         int steps = 200;
@@ -163,10 +163,6 @@ class TbsSimulationTest {
 
         public String getLastErrorMessage() {
             return lastErrorMessage;
-        }
-
-        public boolean isStopped() {
-            return stopped;
         }
     }
 }
