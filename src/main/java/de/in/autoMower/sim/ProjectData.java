@@ -30,6 +30,26 @@ public class ProjectData implements Serializable {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class ZonePointDTO implements Serializable {
+        public double x;
+        public double y;
+        public int percentage;
+
+        public ZonePointDTO() {
+        }
+
+        public ZonePointDTO(ZonePoint zp) {
+            this.x = zp.getPoint().getX();
+            this.y = zp.getPoint().getY();
+            this.percentage = zp.getPercentage();
+        }
+
+        public ZonePoint toZonePoint() {
+            return new ZonePoint(new Point2D.Double(x, y), percentage);
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class MultiLineDTO {
         public List<PointDTO> points;
         public int colorRGB;
@@ -66,10 +86,12 @@ public class ProjectData implements Serializable {
         public double chargeRateWhPerSec = 0.02;
         public PointDTO currentPosition;
 
+        public int version = 1; // Default to 1
+
         public MowerDTO() {
         }
 
-        public MowerDTO(AutoMowerModel mower) {
+        public MowerDTO(AbstractAutoMowerModel mower) {
             this.speedInCmPerSec = mower.getSpeedInCmPerSec();
             this.mowingWidthInCm = mower.getMowingWidthInCm();
             this.batteryCapacityWh = mower.batteryCapacityWh;
@@ -78,6 +100,7 @@ public class ProjectData implements Serializable {
             if (mower.getCurrentPosition() != null) {
                 this.currentPosition = new PointDTO(mower.getCurrentPosition());
             }
+            this.version = mower.getModelVersion();
         }
     }
 
@@ -87,6 +110,7 @@ public class ProjectData implements Serializable {
     public MowerDTO mower;
     public String backgroundImageBase64; // PNG image as Base64 string
     public PointDTO chargingStation;
+    public List<ZonePointDTO> zonePoints;
 
     public ProjectData() {
     }
