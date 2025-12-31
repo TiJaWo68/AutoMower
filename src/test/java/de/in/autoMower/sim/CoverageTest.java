@@ -98,14 +98,7 @@ class CoverageTest {
         // this test visibility.
 
         public void callUpdateCoverage(Point2D pos) {
-            try {
-                java.lang.reflect.Method method = AutoMowerModel.class.getDeclaredMethod("updateCoverage",
-                        Point2D.class);
-                method.setAccessible(true);
-                method.invoke(this, pos);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            this.updateCoverage(pos);
         }
     }
 }
