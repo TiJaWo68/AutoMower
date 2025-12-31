@@ -55,7 +55,7 @@ class StationSpawnTest {
         MultiLine2D trace = new MultiLine2D(java.awt.Color.RED);
         mower.start(trace, gm);
 
-        assertFalse(mower.stopped, "Mower should run");
+        assertFalse(mower.isStopped(), "Mower should run");
         assertTrue(mower.getCurrentPosition().distance(new Point2D.Double(0, 0)) < 0.1, "Mower should be at (0,0)");
     }
 }
