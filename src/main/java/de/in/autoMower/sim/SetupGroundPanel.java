@@ -134,10 +134,12 @@ public class SetupGroundPanel extends SimulationPanel {
 				if (obstacle != null) {
 					Line2D line = obstacle.getLine2D(tp);
 					if (line != null) {
-						JFormattedTextField textfield = new JFormattedTextField(java.text.NumberFormat.getIntegerInstance());
-						textfield.setValue(100); // Default suggestion
-						int result = JOptionPane.showConfirmDialog(SetupGroundPanel.this, textfield, "Enter length in cm for selected line",
-								JOptionPane.OK_CANCEL_OPTION);
+						JFormattedTextField textfield = new JFormattedTextField(
+								java.text.NumberFormat.getIntegerInstance());
+						textfield.setValue(100); // Default
+													// suggestion
+						int result = JOptionPane.showConfirmDialog(SetupGroundPanel.this, textfield,
+								"Enter length in cm for selected line", JOptionPane.OK_CANCEL_OPTION);
 						if (result == JOptionPane.OK_OPTION) {
 							try {
 								textfield.commitEdit();
@@ -168,20 +170,57 @@ public class SetupGroundPanel extends SimulationPanel {
 			}
 		}
 	};
+	protected DelegatedMouseAdapter zonePointMA = new DelegatedMouseAdapter() {
+		@Override
+		public void mouseClicked(MouseEvent me) {
+			try {
+				Point2D tp = createAffineTransform().inverseTransform(me.getPoint(), new Point2D.Double());
+				// Check for removal first
+				double threshold = MultiLine2D.ED / model.getCalibration();
+				int sizeBefore = model.getZonePoints().size();
+				model.removeZonePointNear(tp, threshold);
+
+				if (model.getZonePoints().size() == sizeBefore) {
+					// Nothing removed, add new one
+					javax.swing.JSlider slider = new javax.swing.JSlider(0, 100, 20);
+					slider.setMajorTickSpacing(20);
+					slider.setMinorTickSpacing(5);
+					slider.setPaintTicks(true);
+					slider.setPaintLabels(true);
+
+					int result = JOptionPane.showConfirmDialog(SetupGroundPanel.this, slider,
+							"Arbeitszeitanteil für diese Zone (%)", JOptionPane.OK_CANCEL_OPTION);
+					if (result == JOptionPane.OK_OPTION) {
+						model.addZonePoint(tp, slider.getValue());
+					}
+				}
+			} catch (NoninvertibleTransformException ex) {
+				ex.printStackTrace();
+			}
+		}
+	};
 
 	DelegatedMouseAdapter delegate = null;
 	private JButton hamburgerBtn;
+
+	private void addMenuItem(JPopupMenu menu, String text, DelegatedMouseAdapter adapter) {
+		javax.swing.JCheckBoxMenuItem item = new javax.swing.JCheckBoxMenuItem(
+				new SetDelegateMouseAdapter(text, adapter));
+		item.setSelected(delegate == adapter);
+		menu.add(item);
+	}
 
 	public SetupGroundPanel(GroundModel model) {
 		super(model);
 		hamburgerBtn = new JButton(new HamburgerMenuIcon(30));
 		hamburgerBtn.addActionListener(e -> {
 			JPopupMenu menu = new JPopupMenu();
-			menu.add(new SetDelegateMouseAdapter("set border", setBorderMA));
-			menu.add(new SetDelegateMouseAdapter("new obstacle", addObstacleMA));
-			menu.add(new SetDelegateMouseAdapter("remove obstacle", removeObstacleMA));
-			menu.add(new SetDelegateMouseAdapter("calibrate", calibrateMA));
-			menu.add(new SetDelegateMouseAdapter("Ladestation", chargingStationMA));
+			addMenuItem(menu, "set border", setBorderMA);
+			addMenuItem(menu, "new obstacle", addObstacleMA);
+			addMenuItem(menu, "remove obstacle", removeObstacleMA);
+			addMenuItem(menu, "calibrate", calibrateMA);
+			addMenuItem(menu, "Ladestation", chargingStationMA);
+			addMenuItem(menu, "Zonenpunkte", zonePointMA);
 			menu.show(hamburgerBtn, 0, 0);
 		});
 		add(hamburgerBtn);
