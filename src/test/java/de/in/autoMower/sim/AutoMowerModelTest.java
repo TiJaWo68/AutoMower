@@ -31,6 +31,7 @@ class AutoMowerModelTest {
         mower.line = new MultiLine2D(Color.RED);
 
         mower.random = new Random(42); // Seeded for reproducibility
+        mower.currentState = AutoMowerModel.State.MOWING;
 
         // Setup collision state: hitting the right wall (x=100) at y=50
         mower.currentPosition = new Point2D.Double(100, 50);
@@ -74,7 +75,7 @@ class AutoMowerModelTest {
         mower.border = border;
         mower.currentPosition = new Point2D.Double(150, 50); // Outside
         mower.currentLine = new Line2D.Double(new Point2D.Double(100, 50), new Point2D.Double(150, 50));
-        mower.stopped = false;
+        mower.currentState = AutoMowerModel.State.MOWING;
         mower.speedInCmPerSec = 0; // prevent movement
 
         // We can't easily call runMower() because it has a loop.
