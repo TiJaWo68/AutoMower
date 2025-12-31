@@ -75,7 +75,8 @@ public class SimulationPanel extends JPanel {
 				if (userScale > 50.0)
 					userScale = 50.0;
 
-				// 4. Calculate new translation to keep (wx, wy) at (mx, my) mx = wx * newTotalScale + newTotalTx newTotalTx = mx - wx *
+				// 4. Calculate new translation to keep (wx, wy) at (mx, my) mx = wx *
+				// newTotalScale + newTotalTx newTotalTx = mx - wx *
 				// newTotalScale
 				double newTotalScale = baseZoom * userScale;
 				double newTotalTx = mx - wx * newTotalScale;
@@ -109,7 +110,7 @@ public class SimulationPanel extends JPanel {
 				AffineTransform transform = createAffineTransform();
 				g2d.drawImage(model.getImage(), transform, null);
 
-				AutoMowerModel mower = App.getApp().getMower();
+				AbstractAutoMowerModel mower = App.getApp().getMower();
 				double cmPropix = model.getCalibration();
 				if (cmPropix <= 0)
 					cmPropix = 1.0;
@@ -138,13 +139,22 @@ public class SimulationPanel extends JPanel {
 				model.draw(g2d, transform);
 
 				// Draw Battery Level and Status
-				drawBatteryStatus(g);
+				mower.drawStats(g2d, new Point2D.Double(10, 10));
 				drawScaleBar(g);
 
-				if (mower.isCharging) {
+				if (mower.isCharging()) {
 					g.setColor(java.awt.Color.YELLOW);
 					g.setFont(g.getFont().deriveFont(java.awt.Font.BOLD, 24f));
 					g.drawString("CHARGING...", getWidth() / 2 - 50, getHeight() / 2);
+				}
+
+				// Draw transition target if applicable
+				if (mower.currentState.name().equals("TRANSITIONING_TO_ZONE")
+						&& mower.getTransitionTargetPoint() != null) {
+					g2d.setColor(java.awt.Color.CYAN);
+					Point2D tp = transform.transform(mower.getTransitionTargetPoint(), new Point2D.Double());
+					g2d.fillOval((int) tp.getX() - 5, (int) tp.getY() - 5, 10, 10);
+					g2d.drawString("TARGET ZONE", (int) tp.getX() + 7, (int) tp.getY() - 7);
 				}
 			}
 		} catch (Exception e) {
@@ -153,70 +163,8 @@ public class SimulationPanel extends JPanel {
 		}
 	}
 
-	private void drawBatteryStatus(Graphics g) {
-		AutoMowerModel mower = App.getApp().getMower();
-		if (mower == null)
-			return;
-
-		int x = 10;
-		int y = 10;
-		int width = 100;
-		int height = 15;
-
-		double batteryPercent = mower.currentBatteryWh / mower.batteryCapacityWh;
-
-		// Draw battery frame
-		g.setColor(java.awt.Color.GRAY);
-		g.drawRect(x, y, width, height);
-		g.drawRect(x + width, y + height / 4, 4, height / 2); // Battery tip
-
-		// Draw battery fill
-		if (batteryPercent > 0.5)
-			g.setColor(java.awt.Color.GREEN);
-		else if (batteryPercent > 0.15)
-			g.setColor(java.awt.Color.ORANGE);
-		else
-			g.setColor(java.awt.Color.RED);
-
-		g.fillRect(x + 1, y + 1, (int) ((width - 1) * batteryPercent), height - 1);
-
-		// Draw status text
-		g.setColor(java.awt.Color.WHITE);
-		String status = "Mowing";
-		if (mower.isCharging)
-			status = "Charging";
-		else if (mower.isReturningToDock)
-			status = "Returning home";
-
-		g.drawString(String.format("%s (%.0f%%)", status, batteryPercent * 100), x, y + height + 15);
-
-		// Draw runtime
-		int hours = (int) (mower.simulatedRuntimeSeconds / 3600);
-		int minutes = (int) ((mower.simulatedRuntimeSeconds % 3600) / 60);
-		int seconds = (int) (mower.simulatedRuntimeSeconds % 60);
-		String runtimeStr = String.format("Runtime: %02d:%02d:%02d", hours, minutes, seconds);
-		g.drawString(runtimeStr, x, y + height + 30);
-
-		// Draw coverage
-		String coverageStr = String.format("Coverage: %.1f%%", mower.getCoveragePercentage() * 100.0);
-		g.drawString(coverageStr, x, y + height + 45);
-
-		// Draw error count
-		int errs = mower.getNavigationErrorCount();
-		if (errs > 0) {
-			g.setColor(java.awt.Color.RED);
-		} else {
-			g.setColor(java.awt.Color.WHITE);
-		}
-		g.drawString("Nav Errors: " + errs, x, y + height + 75);
-
-		// Draw collisions
-		g.setColor(java.awt.Color.WHITE);
-		g.drawString("Collisions: " + mower.getCollisionCount(), x, y + height + 60);
-	}
-
 	private void drawScaleBar(Graphics g) {
-		AutoMowerModel mower = App.getApp().getMower();
+		AbstractAutoMowerModel mower = App.getApp().getMower();
 		if ((mower == null) || (model.getCalibration() <= 0))
 			return;
 
