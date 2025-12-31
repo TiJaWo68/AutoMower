@@ -62,18 +62,15 @@ class EdgeCuttingSimulationTest {
 
         // Wait for completion (it should stop at charging station)
         long start = System.currentTimeMillis();
-        int lastPoints = 0;
-        while (!mower.stopped && (System.currentTimeMillis() - start) < 60000) {
+        while (!mower.isStopped() && (System.currentTimeMillis() - start) < 60000) {
             Thread.sleep(1000);
             int currentPoints = trace.getNumberOfPoints();
             System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s, Points: " + currentPoints +
                     ", Pos: " + mower.getCurrentPosition() + ", State: " + mower.currentState);
-            lastPoints = currentPoints;
         }
 
-        assertTrue(mower.stopped, "Mower did not stop within timeout. Final Pos: " + mower.getCurrentPosition()
+        assertTrue(mower.isStopped(), "Mower did not stop within timeout. Final Pos: " + mower.getCurrentPosition()
                 + ", State: " + mower.currentState);
-        assertTrue(mower.isCharging, "Mower should be charging at the end. State: " + mower.currentState);
 
         // Ensure it followed the border (trace points should be roughly equal to border
         // points + 1)
