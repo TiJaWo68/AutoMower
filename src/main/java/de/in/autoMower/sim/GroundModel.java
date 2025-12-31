@@ -8,6 +8,8 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -40,6 +42,7 @@ public class GroundModel implements Serializable {
 
 	private transient BufferedImage image;
 	private Point2D chargingStation;
+	private final List<ZonePoint> zonePoints = new ArrayList<>();
 
 	public BufferedImage getImage() {
 		return image;
@@ -108,6 +111,49 @@ public class GroundModel implements Serializable {
 			g2d.drawOval((int) (p.getX() - 7), (int) (p.getY() - 7), 14, 14);
 		}
 
+		drawZonePoints(g2d, transform);
+
+	}
+
+	private void drawZonePoints(Graphics2D g, AffineTransform transform) {
+		if (zonePoints.isEmpty())
+			return;
+
+		g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+		g.setFont(g.getFont().deriveFont(java.awt.Font.BOLD, 12f));
+
+		for (int i = 0; i < zonePoints.size(); i++) {
+			ZonePoint zp = zonePoints.get(i);
+			Point2D worldP = zp.getPoint();
+			Point2D viewP = transform.transform(worldP, new Point2D.Double());
+
+			g.setColor(CHARGING_STATION_COLOR);
+			int s = 6;
+			g.fillRect((int) viewP.getX() - s / 2, (int) viewP.getY() - s / 2, s, s);
+			g.setColor(Color.BLACK);
+			g.drawRect((int) viewP.getX() - s / 2, (int) viewP.getY() - s / 2, s, s);
+
+			String label = getZoneLabel(i) + " (" + zp.getPercentage() + "%)";
+			int tx = (int) viewP.getX() + 8;
+			int ty = (int) viewP.getY() + 4;
+
+			// Shadow
+			g.setColor(new Color(0, 0, 0, 180));
+			g.drawString(label, tx + 1, ty + 1);
+			// Text
+			g.setColor(CHARGING_STATION_COLOR);
+			g.drawString(label, tx, ty);
+		}
+	}
+
+	public String getZoneLabel(int index) {
+		StringBuilder sb = new StringBuilder();
+		int i = index;
+		do {
+			sb.insert(0, (char) ('A' + (i % 26)));
+			i = (i / 26) - 1;
+		} while (i >= 0);
+		return sb.toString();
 	}
 
 	public void mouseMoved(Point2D p) {
@@ -295,5 +341,179 @@ public class GroundModel implements Serializable {
 
 		border.setNumberingStartAndDirection(nearestIdx, direction);
 		border.setShowIndices(true);
+
+		sortZonePoints();
+		listener.stateChanged(new ChangeEvent(this));
+	}
+
+	public List<ZonePoint> getZonePoints() {
+		return zonePoints;
+	}
+
+	public void setZonePoints(List<ZonePoint> zones) {
+		this.zonePoints.clear();
+		this.zonePoints.addAll(zones);
+		sortZonePoints();
+		listener.stateChanged(new ChangeEvent(this));
+	}
+
+	public void removeZonePointNear(Point2D p, double threshold) {
+		ZonePoint found = null;
+		for (ZonePoint zp : zonePoints) {
+			if (zp.getPoint().distance(p) < threshold) {
+				found = zp;
+				break;
+			}
+		}
+		if (found != null) {
+			zonePoints.remove(found);
+			sortZonePoints();
+			listener.stateChanged(new ChangeEvent(this));
+		}
+	}
+
+	public void addZonePoint(Point2D p, int percentage) {
+		if (border == null || border.getNumberOfPoints() < 2)
+			return;
+
+		Point2D projected = projectToBorder(p);
+		if (projected != null) {
+			zonePoints.add(new ZonePoint(projected, percentage));
+			sortZonePoints();
+			listener.stateChanged(new ChangeEvent(this));
+		}
+	}
+
+	private Point2D projectToBorder(Point2D p) {
+		List<Point2D> pts = border.getPoints();
+		int n = pts.size();
+		double minD = Double.MAX_VALUE;
+		Point2D best = null;
+
+		for (int i = 0; i < n; i++) {
+			int next = (i + 1) % n;
+			Line2D segment = new Line2D.Double(pts.get(i), pts.get(next));
+			Point2D proj = GeomUtil.getPerpendicularPointToLine(segment, p);
+			if (proj != null) {
+				// Clamp to segment
+				double dist = segment.ptSegDist(p);
+				if (dist < minD) {
+					minD = dist;
+					// Ensure proj is on segment
+					if (segment.ptSegDist(proj) > 0.001) {
+						if (p.distance(pts.get(i)) < p.distance(pts.get(next))) {
+							best = (Point2D) pts.get(i).clone();
+						} else {
+							best = (Point2D) pts.get(next).clone();
+						}
+					} else {
+						best = proj;
+					}
+				}
+			}
+		}
+		return best;
+	}
+
+	private void sortZonePoints() {
+		if (border == null || border.getNumberOfPoints() == 0 || zonePoints.isEmpty())
+			return;
+
+		int startIdx = border.numberingStartIndex;
+		int direction = border.numberingDirection;
+		List<Point2D> pts = border.getPoints();
+
+		zonePoints.sort(Comparator.comparingDouble(p -> getDistOnPerimeter(p.getPoint(), startIdx, direction, pts)));
+	}
+
+	public double getDistOnPerimeter(Point2D p) {
+		if (border == null || border.getNumberOfPoints() == 0)
+			return 0;
+		return getDistOnPerimeter(p, border.numberingStartIndex, border.numberingDirection, border.getPoints());
+	}
+
+	private double getDistOnPerimeter(Point2D p, int startIdx, int direction, List<Point2D> pts) {
+		int n = pts.size();
+		// Find segment containing p
+		double minDist = Double.MAX_VALUE;
+		int segmentStart = -1;
+		for (int i = 0; i < n; i++) {
+			int next = (i + 1) % n;
+			Line2D seg = new Line2D.Double(pts.get(i), pts.get(next));
+			double d = seg.ptSegDist(p);
+			if (d < minDist) {
+				minDist = d;
+				segmentStart = i;
+			}
+		}
+
+		double totalDist = 0;
+		int curr = startIdx;
+		while (curr != segmentStart) {
+			int next = (curr + direction + n) % n;
+			totalDist += pts.get(curr).distance(pts.get(next));
+			curr = next;
+		}
+
+		// distance from curr to p
+		// Note: p is on segment (segmentStart, segmentStart+1)
+		// If direction is 1, we add distance from segmentStart to p
+		// If direction is -1, the segment relative to our path order is different.
+		// Wait, the while loop brings us to segmentStart in the specific direction.
+		// So we just need to add directed distance from segmentStart to p within the
+		// segment.
+
+		totalDist += pts.get(segmentStart).distance(p);
+		return totalDist;
+	}
+
+	public double getPerimeterLength() {
+		if (border == null || border.getNumberOfPoints() < 2)
+			return 0;
+		double total = 0;
+		List<Point2D> pts = border.getPoints();
+		for (int i = 0; i < pts.size(); i++) {
+			total += pts.get(i).distance(pts.get((i + 1) % pts.size()));
+		}
+		return total;
+	}
+
+	public Point2D getPointAtDistOnPerimeter(double dist) {
+		if (border == null || border.getNumberOfPoints() < 2)
+			return null;
+
+		List<Point2D> pts = border.getPoints();
+		int n = pts.size();
+		int startIdx = border.numberingStartIndex;
+		int direction = border.numberingDirection;
+
+		double currentDist = 0;
+		int curr = startIdx;
+		double maxLen = getPerimeterLength();
+		dist = dist % maxLen;
+		if (dist < 0)
+			dist += maxLen;
+
+		while (true) {
+			int next = (curr + direction + n) % n;
+			double segLen = pts.get(curr).distance(pts.get(next));
+			if (currentDist + segLen >= dist) {
+				// Point is on this segment
+				double t = (dist - currentDist) / segLen;
+				return new Point2D.Double(
+						pts.get(curr).getX() + t * (pts.get(next).getX() - pts.get(curr).getX()),
+						pts.get(curr).getY() + t * (pts.get(next).getY() - pts.get(curr).getY()));
+			}
+			currentDist += segLen;
+			curr = next;
+			if (curr == startIdx)
+				break; // Wrapped around
+		}
+		return pts.get(startIdx);
+	}
+
+	public void clearZonePoints() {
+		zonePoints.clear();
+		listener.stateChanged(new ChangeEvent(this));
 	}
 }
