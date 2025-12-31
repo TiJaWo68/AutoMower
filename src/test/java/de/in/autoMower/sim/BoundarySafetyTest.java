@@ -44,7 +44,6 @@ class BoundarySafetyTest {
 
         Point2D startPos = groundModel.getChargingStation();
         mower.setCurrentPosition(startPos);
-        mower.stopped = false;
         mower.currentState = AutoMowerModel.State.MOWING;
 
         // Trace for mower
@@ -59,7 +58,7 @@ class BoundarySafetyTest {
         for (int i = 0; i < maxSteps && collisions < 500; i++) {
             mower.calculateNextSegment();
 
-            if (mower.stopped) {
+            if (mower.isStopped()) {
                 fail("Mower stopped at step " + i + " after " + collisions + " collisions.");
             }
 
